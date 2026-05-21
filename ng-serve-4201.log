@@ -1,0 +1,21 @@
+
+> frontend@0.0.0 start
+> ng serve --proxy-config proxy.conf.json --port 4201
+
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  89.73 kB | 
+polyfills.js        | polyfills     |  88.09 kB | 
+styles.css          | styles        |   9.28 kB | 
+
+                    | Initial total | 187.09 kB
+
+Application bundle generation complete. [4.808 seconds]
+
+Watch mode enabled. Watching for file changes...
+  ➜  Local:   http://localhost:4201/
+Initial chunk files | Names | Raw size
+main.js             | main  | 89.90 kB | 
+
+Application bundle generation complete. [1.088 seconds]
+
+Page reload sent to client(s).
