@@ -11,7 +11,11 @@ const CATEGORIES = ['Electricity', 'Water', 'Maintenance', 'Food', 'Salary', 'In
   standalone: true,
   imports: [FormsModule, CurrencyPipe, DatePipe],
   template: `
-    <header><p class="eyebrow">Expense Management</p><h1>Expenses</h1></header>
+    <header>
+      <p class="eyebrow">Expense Management</p>
+      <h1>Expenses</h1>
+      <p class="page-copy">Track bills, categories, dates, notes, and uploaded receipts for monthly reporting.</p>
+    </header>
     <section class="grid two">
       <form class="panel form" (ngSubmit)="save()">
         <h2>{{ form._id ? 'Edit Expense' : 'Add Expense' }}</h2>
@@ -21,23 +25,29 @@ const CATEGORIES = ['Electricity', 'Water', 'Maintenance', 'Food', 'Salary', 'In
         <label>Date<input type="date" [(ngModel)]="form.date" name="date" /></label>
         <label>Upload Bill<input type="file" (change)="file = $any($event.target).files[0]" /></label>
         <label>Notes<textarea [(ngModel)]="form.notes" name="notes"></textarea></label>
-        <button class="primary">Save Expense</button>
-        <button class="secondary" type="button" (click)="reset()">Clear</button>
+        <div class="form-actions">
+          <button class="primary">Save Expense</button>
+          <button class="secondary" type="button" (click)="reset()">Clear</button>
+        </div>
       </form>
       <article class="panel">
         <h2>Expense List</h2>
-        <div class="table-wrap"><table>
+        @if (expenses.length) {
+          <div class="table-wrap"><table>
           <thead><tr><th>Title</th><th>Category</th><th>Amount</th><th>Date</th><th>Bill</th><th></th></tr></thead>
           <tbody>
             @for (expense of expenses; track expense._id) {
               <tr>
                 <td>{{ expense.title }}</td><td>{{ expense.category }}</td><td>{{ expense.amount | currency:'INR':'symbol':'1.0-0' }}</td><td>{{ expense.date | date }}</td>
                 <td>@if (expense.bill?.path) { <a [href]="fileUrl(expense.bill?.path)" target="_blank">View</a> }</td>
-                <td><button class="secondary" (click)="edit(expense)">Edit</button><button class="danger" (click)="remove(expense)">Delete</button></td>
+                <td><div class="row-actions"><button class="secondary" (click)="edit(expense)">Edit</button><button class="danger" (click)="remove(expense)">Delete</button></div></td>
               </tr>
             }
           </tbody>
-        </table></div>
+          </table></div>
+        } @else {
+          <div class="empty-state">No expenses added yet. Add bills and spending from the form.</div>
+        }
       </article>
     </section>
   `

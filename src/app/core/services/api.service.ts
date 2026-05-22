@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Expense, Rent, Room, Settings, Summary, Tenant } from '../models';
+import { Expense, MonthlyDues, Rent, Room, Settings, Summary, Tenant } from '../models';
 import { environment } from '../../../environments/environment';
 
 export const API_URL = environment.apiUrl;
@@ -46,5 +46,11 @@ export class ApiService {
     get: () => this.http.get<Settings>(`${API_URL}/settings`),
     update: (data: Partial<Settings>) => this.http.put<Settings>(`${API_URL}/settings`, data),
     public: () => this.http.get<{ settings: Settings; bills: Expense[]; serverTime: string }>(`${API_URL}/settings/public`)
+  };
+
+  notifications = {
+    monthlyDues: () => this.http.get<MonthlyDues>(`${API_URL}/notifications/monthly-dues`),
+    sendMonthlyDueEmails: (adminEmail?: string) =>
+      this.http.post<{ message: string; sent?: string[]; monthlyDues: MonthlyDues }>(`${API_URL}/notifications/monthly-dues/email`, { adminEmail })
   };
 }

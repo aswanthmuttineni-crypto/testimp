@@ -19,12 +19,18 @@ export interface Tenant {
   _id?: string;
   name: string;
   phone: string;
+  email?: string;
+  aadhaarNo?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  address?: string;
   roomId: string | Room;
   bedNo: number;
   joiningDate: string;
   advanceAmount: number;
   monthlyRent: number;
   status: 'ACTIVE' | 'INACTIVE';
+  notes?: string;
   idProof?: FileRef;
 }
 
@@ -54,6 +60,30 @@ export interface Settings {
   adminEmail: string;
   address: string;
   foodMenu: string;
+  weeklyMenu: WeeklyMenuItem[];
+  notificationEmail?: string;
+  emailNotificationsEnabled?: boolean;
+}
+
+export interface WeeklyMenuItem {
+  day: string;
+  breakfast: string;
+  lunch: string;
+  dinner: string;
+}
+
+export interface MonthlyDue {
+  tenant: Tenant;
+  month: string;
+  year: number;
+  amount: number;
+  status: 'PENDING' | 'PAID';
+}
+
+export interface MonthlyDues {
+  month: string;
+  year: number;
+  dues: MonthlyDue[];
 }
 
 export interface Summary {
@@ -63,6 +93,8 @@ export interface Summary {
   occupiedRooms: number;
   vacantRooms: number;
   pendingRent: number;
+  currentMonthDues: number;
+  monthlyDues: MonthlyDues;
   rents: Rent[];
   expenses: Expense[];
 }

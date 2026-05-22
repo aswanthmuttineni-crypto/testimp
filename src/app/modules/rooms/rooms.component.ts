@@ -9,7 +9,11 @@ import { Room } from '../../core/models';
   standalone: true,
   imports: [FormsModule, CurrencyPipe],
   template: `
-    <header><p class="eyebrow">Room Management</p><h1>Rooms</h1></header>
+    <header>
+      <p class="eyebrow">Room Management</p>
+      <h1>Rooms</h1>
+      <p class="page-copy">Create rooms, set bed capacity, and quickly see which beds are already occupied.</p>
+    </header>
     <section class="grid two">
       <form class="panel form" (ngSubmit)="save()">
         <h2>{{ form._id ? 'Edit Room' : 'Add Room' }}</h2>
@@ -17,12 +21,15 @@ import { Room } from '../../core/models';
         <label>Floor<input type="number" [(ngModel)]="form.floor" name="floor" required /></label>
         <label>Capacity<input type="number" [(ngModel)]="form.capacity" name="capacity" required /></label>
         <label>Rent Amount<input type="number" [(ngModel)]="form.rentAmount" name="rentAmount" required /></label>
-        <button class="primary">Save Room</button>
-        <button class="secondary" type="button" (click)="reset()">Clear</button>
+        <div class="form-actions">
+          <button class="primary">Save Room</button>
+          <button class="secondary" type="button" (click)="reset()">Clear</button>
+        </div>
       </form>
       <article class="panel">
         <h2>Room List</h2>
-        <div class="table-wrap">
+        @if (rooms.length) {
+          <div class="table-wrap">
           <table>
             <thead><tr><th>Room</th><th>Floor</th><th>Beds</th><th>Rent</th><th>Status</th><th></th></tr></thead>
             <tbody>
@@ -39,13 +46,16 @@ import { Room } from '../../core/models';
                     </div>
                   </td>
                   <td>{{ room.rentAmount | currency:'INR':'symbol':'1.0-0' }}</td>
-                  <td><span class="badge">{{ room.status }}</span></td>
-                  <td><button class="secondary" (click)="edit(room)">Edit</button><button class="danger" (click)="remove(room)">Delete</button></td>
+                  <td><span class="badge" [class.vacant]="room.status === 'VACANT'" [class.occupied]="room.status !== 'VACANT'">{{ room.status }}</span></td>
+                  <td><div class="row-actions"><button class="secondary" (click)="edit(room)">Edit</button><button class="danger" (click)="remove(room)">Delete</button></div></td>
                 </tr>
               }
             </tbody>
           </table>
-        </div>
+          </div>
+        } @else {
+          <div class="empty-state">No rooms added yet. Add your first room using the form.</div>
+        }
       </article>
     </section>
   `

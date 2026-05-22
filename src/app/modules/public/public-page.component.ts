@@ -10,11 +10,28 @@ import { Expense, Settings } from '../../core/models';
   template: `
     <section class="public-page">
       <header class="public-hero">
-        <div><p class="eyebrow">Hostel Public Info</p><h1>{{ settings?.hostelName || 'Hostel' }}</h1><p>{{ now | date:'medium' }}</p></div>
+        <div>
+          <p class="eyebrow">Hostel Public Info</p>
+          <h1>{{ settings?.hostelName || 'Hostel' }}</h1>
+          <p>{{ settings?.address || 'Food menu and public bills display' }}</p>
+          <p>{{ now | date:'medium' }}</p>
+        </div>
         <a class="secondary link-button" href="/login">Admin Login</a>
       </header>
       <section class="grid two">
-        <article class="panel"><h2>Food Menu</h2>@for (line of menuLines(); track line) { <div class="report-row">{{ line }}</div> }</article>
+        <article class="panel">
+          <h2>Weekly Food Menu</h2>
+          @for (item of settings?.weeklyMenu || []; track item.day) {
+            <div class="menu-public-row">
+              <strong>{{ item.day }}</strong>
+              <span>Breakfast: {{ item.breakfast || '-' }}</span>
+              <span>Lunch: {{ item.lunch || '-' }}</span>
+              <span>Dinner: {{ item.dinner || '-' }}</span>
+            </div>
+          } @empty {
+            @for (line of menuLines(); track line) { <div class="report-row">{{ line }}</div> } @empty { <div class="empty-state">Food menu is not published yet.</div> }
+          }
+        </article>
         <article class="panel">
           <h2>Monthly Power & Water Bills</h2>
           @for (bill of bills; track bill._id) {
@@ -23,6 +40,8 @@ import { Expense, Settings } from '../../core/models';
               <span>{{ bill.date | date }}</span>
               @if (bill.bill?.path) { <a [href]="fileUrl(bill.bill?.path)" target="_blank">View bill</a> }
             </div>
+          } @empty {
+            <div class="empty-state">No public bills are available yet.</div>
           }
         </article>
       </section>

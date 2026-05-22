@@ -11,7 +11,11 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
   standalone: true,
   imports: [CommonModule, FormsModule, CurrencyPipe, DatePipe],
   template: `
-    <header><p class="eyebrow">Rent Collection</p><h1>Rent Collection</h1></header>
+    <header>
+      <p class="eyebrow">Rent Collection</p>
+      <h1>Rent Collection</h1>
+      <p class="page-copy">Record monthly payments, mark pending dues, and keep a searchable payment history.</p>
+    </header>
     <section class="grid two">
       <form class="panel form" (ngSubmit)="save()">
         <h2>{{ form._id ? 'Edit Payment' : 'Collect Rent' }}</h2>
@@ -21,24 +25,30 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
         <label>Amount<input type="number" [(ngModel)]="form.amount" name="amount" /></label>
         <label>Payment Date<input type="date" [(ngModel)]="form.paymentDate" name="paymentDate" /></label>
         <label>Status<select [(ngModel)]="form.status" name="status"><option>PAID</option><option>PENDING</option></select></label>
-        <button class="primary">Save Payment</button>
-        <button class="secondary" type="button" (click)="reset()">Clear</button>
+        <div class="form-actions">
+          <button class="primary">Save Payment</button>
+          <button class="secondary" type="button" (click)="reset()">Clear</button>
+        </div>
       </form>
       <article class="panel">
         <h2>Payment History</h2>
-        <div class="table-wrap"><table>
+        @if (rents.length) {
+          <div class="table-wrap"><table>
           <thead><tr><th>Tenant</th><th>Month</th><th>Amount</th><th>Date</th><th>Status</th><th></th></tr></thead>
           <tbody>
             @for (rent of rents; track rent._id) {
               <tr>
                 <td>{{ tenantName(rent) }}</td><td>{{ rent.month }} {{ rent.year }}</td>
                 <td>{{ rent.amount | currency:'INR':'symbol':'1.0-0' }}</td><td>{{ rent.paymentDate | date }}</td>
-                <td><span class="badge">{{ rent.status }}</span></td>
-                <td><button class="secondary" (click)="edit(rent)">Edit</button><button class="danger" (click)="remove(rent)">Delete</button></td>
+                <td><span class="badge" [class.paid]="rent.status === 'PAID'" [class.pending]="rent.status !== 'PAID'">{{ rent.status }}</span></td>
+                <td><div class="row-actions"><button class="secondary" (click)="edit(rent)">Edit</button><button class="danger" (click)="remove(rent)">Delete</button></div></td>
               </tr>
             }
           </tbody>
-        </table></div>
+          </table></div>
+        } @else {
+          <div class="empty-state">No rent records yet. Collect or mark rent from the form.</div>
+        }
       </article>
     </section>
   `

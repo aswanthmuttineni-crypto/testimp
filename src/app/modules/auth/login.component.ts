@@ -12,9 +12,10 @@ import { AuthService } from '../../core/services/auth.service';
       <form class="panel login-card" (ngSubmit)="login()">
         <p class="eyebrow">Hostel Operations</p>
         <h1>Hostel Management System</h1>
+        <p class="page-copy">Sign in to manage rooms, tenants, rent collection, expenses, and public display details.</p>
         <label>Email<input type="email" [(ngModel)]="email" name="email" autocomplete="username" required /></label>
         <label>Password<input type="password" [(ngModel)]="password" name="password" autocomplete="current-password" required /></label>
-        <button class="primary">Login</button>
+        <button class="primary">Login to Dashboard</button>
         @if (error) { <p class="error">{{ error }}</p> }
       </form>
     </section>

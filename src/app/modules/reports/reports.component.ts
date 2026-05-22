@@ -8,7 +8,11 @@ import { Summary } from '../../core/models';
   standalone: true,
   imports: [CurrencyPipe],
   template: `
-    <header><p class="eyebrow">Reports</p><h1>Reports</h1></header>
+    <header>
+      <p class="eyebrow">Reports</p>
+      <h1>Reports</h1>
+      <p class="page-copy">Export financial records and review monthly income, expenses, pending rent, and profit.</p>
+    </header>
     @if (summary) {
       <section class="panel actions"><button class="secondary" (click)="exportCsv()">Export Excel CSV</button><button class="secondary" (click)="print()">Export PDF / Print</button></section>
       <section class="grid two">
@@ -19,8 +23,12 @@ import { Summary } from '../../core/models';
         <h2>Monthly Income & Expenses</h2>
         @for (row of monthlyRows(); track row.month) {
           <div class="report-row"><strong>{{ row.month }}</strong><span>{{ row.income | currency:'INR':'symbol':'1.0-0' }} income / {{ row.expense | currency:'INR':'symbol':'1.0-0' }} expense</span></div>
+        } @empty {
+          <div class="empty-state">No monthly records found yet.</div>
         }
       </section>
+    } @else {
+      <section class="loading-state">Loading reports...</section>
     }
   `
 })
