@@ -1,236 +1,269 @@
-import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
-
-import { CurrencyPipe } from '@angular/common';
-
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
-
 import { Summary } from '../../core/models';
 
 @Component({
   selector: 'app-reports',
-
   standalone: true,
+  imports: [CommonModule, CurrencyPipe, DatePipe],
+  styles: [`
+    .page { display: grid; gap: 24px; }
 
-  imports: [CurrencyPipe],
+    /* HERO */
+    .hero {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 20px; padding: 28px 32px; border-radius: 24px;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #fff; box-shadow: 0 16px 40px rgba(15,23,42,0.15);
+    }
+    .hero p { color: #2dd4bf; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+    .hero h1 { margin: 0; font-size: clamp(26px,4vw,38px); letter-spacing: -1.5px; color: #fff; }
+    .hero-btns { display: flex; gap: 10px; flex-shrink: 0; }
+    .btn-outline { padding: 11px 20px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.25); background: transparent; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-outline:hover { background: rgba(255,255,255,0.08); }
+    .btn-white { padding: 11px 20px; border-radius: 12px; border: none; background: #fff; color: #0f172a; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-white:hover { background: #f0fdfa; }
 
-  encapsulation: ViewEncapsulation.None,
+    /* STATS */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 14px; }
+    .scard { padding: 20px 22px; border-radius: 18px; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15,23,42,0.04); }
+    .scard small { display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .scard strong { font-size: 22px; letter-spacing: -0.5px; color: #0f172a; }
+    .scard.green strong { color: #0d9488; }
+    .scard.red strong { color: #ef4444; }
+    .scard.yellow strong { color: #d97706; }
 
-  styleUrls: ['./reports.component.css'],
+    /* PROFIT BAR */
+    .profit-section { padding: 24px; border-radius: 20px; background: #fff; border: 1px solid #e2e8f0; }
+    .profit-section h2 { margin: 0 0 20px; font-size: 18px; }
+    .bar-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+    .bar-label { width: 80px; font-size: 12px; font-weight: 700; color: #475569; flex-shrink: 0; }
+    .bar-track { flex: 1; height: 12px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: inherit; transition: width 0.5s; }
+    .bar-fill.income { background: linear-gradient(90deg,#0d9488,#2dd4bf); }
+    .bar-fill.expense { background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+    .bar-fill.profit { background: linear-gradient(90deg,#6366f1,#818cf8); }
+    .bar-val { width: 100px; font-size: 13px; font-weight: 700; color: #0f172a; text-align: right; flex-shrink: 0; }
 
+    /* MONTHLY TABLE */
+    .panel-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+    .panel-hdr h2 { margin: 0; font-size: 18px; }
+    .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid #e2e8f0; }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: #f8fafc; }
+    th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+    td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+    .profit-pos { color: #0d9488; font-weight: 700; }
+    .profit-neg { color: #ef4444; font-weight: 700; }
+
+    /* MINI BAR IN TABLE */
+    .mini-bar { height: 6px; border-radius: 999px; background: #e2e8f0; margin-top: 4px; overflow: hidden; }
+    .mini-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#0d9488,#2dd4bf); }
+
+    /* RENT / EXPENSE LISTS */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    .list-item:last-child { border-bottom: none; }
+    .list-item strong { color: #0f172a; }
+    .list-item small { color: #64748b; font-size: 12px; }
+    .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+    .badge.paid { background: #dcfce7; color: #15803d; }
+    .badge.pending { background: #fef9c3; color: #a16207; }
+
+    /* EMPTY / LOADING */
+    .empty { padding: 40px; text-align: center; color: #94a3b8; border: 2px dashed #e2e8f0; border-radius: 16px; }
+    .loading { padding: 60px; text-align: center; color: #94a3b8; }
+
+    @media (max-width: 900px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .hero { flex-direction: column; align-items: flex-start; padding: 22px; }
+      .hero-btns { width: 100%; }
+      .hero-btns button { flex: 1; }
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+  `],
   template: `
-    <section class="reports-page">
+    <div class="page">
+
       <!-- HERO -->
-      <header class="reports-hero">
+      <div class="hero">
         <div>
-          <p class="hero-eyebrow">Hostel Financial Reports</p>
-
+          <p>Financial Reports</p>
           <h1>Reports & Analytics</h1>
-
-          <p class="hero-copy">
-            Review hostel income, monthly expenses, pending rent collections and
-            export professional reports for accounting.
-          </p>
         </div>
-
-        <div class="hero-actions">
-          <button class="secondary" type="button" (click)="exportCsv()">
-            Export CSV
-          </button>
-
-          <button class="primary" type="button" (click)="print()">
-            Export PDF
-          </button>
+        <div class="hero-btns">
+          <button class="btn-outline" (click)="exportCsv()">⬇️ Export CSV</button>
+          <button class="btn-white" (click)="print()">🖨️ Print / PDF</button>
         </div>
-      </header>
+      </div>
 
       @if (summary) {
         <!-- STATS -->
-        <section class="stats-grid">
-          <article class="stats-card profit">
-            <div class="stats-icon">📈</div>
+        <div class="stats">
+          <div class="scard green"><small>Total Income</small><strong>{{ summary.totalIncome | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+          <div class="scard red"><small>Total Expenses</small><strong>{{ summary.totalExpenses | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+          <div class="scard"><small>Net Profit</small><strong [class.profit-pos]="summary.profit>=0" [class.profit-neg]="summary.profit<0">{{ summary.profit | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+          <div class="scard yellow"><small>Pending Rent</small><strong>{{ summary.pendingRent | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+          <div class="scard"><small>Occupied Rooms</small><strong>{{ summary.occupiedRooms }}</strong></div>
+          <div class="scard"><small>Vacant Rooms</small><strong>{{ summary.vacantRooms }}</strong></div>
+        </div>
 
-            <small> Total Profit </small>
-
-            <strong>
-              {{ summary.profit | currency: 'INR' : 'symbol' : '1.0-0' }}
-            </strong>
-          </article>
-
-          <article class="stats-card pending">
-            <div class="stats-icon">💰</div>
-
-            <small> Pending Rent </small>
-
-            <strong>
-              {{ summary.pendingRent | currency: 'INR' : 'symbol' : '1.0-0' }}
-            </strong>
-          </article>
-        </section>
-
-        <!-- REPORTS -->
-        <section class="panel reports-card">
-          <div class="card-header">
-            <div>
-              <p class="card-eyebrow">Financial Records</p>
-
-              <h2>Monthly Income & Expenses</h2>
-            </div>
-
-            <div class="icon-box">📊</div>
+        <!-- PROFIT BAR -->
+        <div class="profit-section">
+          <h2>📊 Financial Overview</h2>
+          <div class="bar-row">
+            <span class="bar-label">Income</span>
+            <div class="bar-track"><div class="bar-fill income" [style.width.%]="barPct(summary.totalIncome)"></div></div>
+            <span class="bar-val">{{ summary.totalIncome | currency:'INR':'symbol':'1.0-0' }}</span>
           </div>
+          <div class="bar-row">
+            <span class="bar-label">Expenses</span>
+            <div class="bar-track"><div class="bar-fill expense" [style.width.%]="barPct(summary.totalExpenses)"></div></div>
+            <span class="bar-val">{{ summary.totalExpenses | currency:'INR':'symbol':'1.0-0' }}</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Profit</span>
+            <div class="bar-track"><div class="bar-fill profit" [style.width.%]="barPct(summary.profit)"></div></div>
+            <span class="bar-val">{{ summary.profit | currency:'INR':'symbol':'1.0-0' }}</span>
+          </div>
+        </div>
 
+        <!-- MONTHLY TABLE -->
+        <div class="panel" style="padding:24px;">
+          <div class="panel-hdr">
+            <h2>Monthly Breakdown</h2>
+            <small style="color:#64748b;font-weight:600;">{{ monthlyRows().length }} months</small>
+          </div>
           @if (monthlyRows().length) {
-            <div class="reports-list">
-              @for (row of monthlyRows(); track row.month) {
-                <article class="report-item">
-                  <div class="report-left">
-                    <div class="month-icon">📅</div>
-
-                    <div class="month-info">
-                      <strong>
-                        {{ row.month }}
-                      </strong>
-
-                      <small> Monthly Financial Summary </small>
-                    </div>
-                  </div>
-
-                  <div class="report-right">
-                    <div class="metric-box income">
-                      <small> Income </small>
-
-                      <strong>
-                        {{ row.income | currency: 'INR' : 'symbol' : '1.0-0' }}
-                      </strong>
-                    </div>
-
-                    <div class="metric-box expense">
-                      <small> Expense </small>
-
-                      <strong>
-                        {{ row.expense | currency: 'INR' : 'symbol' : '1.0-0' }}
-                      </strong>
-                    </div>
-                  </div>
-                </article>
-              }
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Income</th>
+                    <th>Expenses</th>
+                    <th>Profit / Loss</th>
+                    <th>Income Bar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of monthlyRows(); track row.month) {
+                    <tr>
+                      <td><strong>{{ row.month }}</strong></td>
+                      <td style="color:#0d9488;font-weight:700;">{{ row.income | currency:'INR':'symbol':'1.0-0' }}</td>
+                      <td style="color:#f59e0b;font-weight:700;">{{ row.expense | currency:'INR':'symbol':'1.0-0' }}</td>
+                      <td>
+                        <span [class.profit-pos]="row.income - row.expense >= 0" [class.profit-neg]="row.income - row.expense < 0">
+                          {{ row.income - row.expense | currency:'INR':'symbol':'1.0-0' }}
+                        </span>
+                      </td>
+                      <td style="min-width:120px;">
+                        <div class="mini-bar"><span [style.width.%]="barPct(row.income)"></span></div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             </div>
           } @else {
-            <div class="empty-state">
-              No monthly financial records found yet.
-            </div>
+            <div class="empty">No monthly data yet.</div>
           }
-        </section>
+        </div>
+
+        <!-- RENT + EXPENSE LISTS -->
+        <div class="two-col">
+          <div class="panel" style="padding:24px;">
+            <div class="panel-hdr"><h2>Recent Rent Payments</h2></div>
+            @if (summary.rents.length) {
+              @for (rent of summary.rents.slice(0,8); track rent._id) {
+                <div class="list-item">
+                  <div>
+                    <strong>{{ tenantName(rent) }}</strong>
+                    <small style="display:block;">{{ rent.month }} {{ rent.year }}</small>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-weight:700;">{{ rent.amount | currency:'INR':'symbol':'1.0-0' }}</div>
+                    <span class="badge" [class.paid]="rent.status==='PAID'" [class.pending]="rent.status!=='PAID'">{{ rent.status }}</span>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="empty" style="padding:24px;">No rent records.</div>
+            }
+          </div>
+
+          <div class="panel" style="padding:24px;">
+            <div class="panel-hdr"><h2>Recent Expenses</h2></div>
+            @if (summary.expenses.length) {
+              @for (exp of summary.expenses.slice(0,8); track exp._id) {
+                <div class="list-item">
+                  <div>
+                    <strong>{{ exp.title }}</strong>
+                    <small style="display:block;">{{ exp.category }} · {{ exp.date | date:'dd MMM yyyy' }}</small>
+                  </div>
+                  <div style="font-weight:700;color:#f59e0b;">{{ exp.amount | currency:'INR':'symbol':'1.0-0' }}</div>
+                </div>
+              }
+            } @else {
+              <div class="empty" style="padding:24px;">No expense records.</div>
+            }
+          </div>
+        </div>
+
       } @else {
-        <section class="loading-state">Loading reports...</section>
+        <div class="loading">Loading reports...</div>
       }
-    </section>
-  `,
+    </div>
+  `
 })
 export class ReportsComponent implements OnInit {
   private api = inject(ApiService);
-
   summary?: Summary;
 
-  ngOnInit() {
-    this.api.reports.summary().subscribe((summary) => {
-      this.summary = summary;
-    });
-  }
+  ngOnInit() { this.api.reports.summary().subscribe(s => this.summary = s); }
 
   monthlyRows() {
-    const map = new Map<
-      string,
-      {
-        month: string;
-        income: number;
-        expense: number;
-      }
-    >();
-
-    this.summary?.rents.forEach((rent) => {
+    const map = new Map<string, { month: string; income: number; expense: number }>();
+    this.summary?.rents.forEach(rent => {
       const key = `${rent.month} ${rent.year}`;
-
-      const row = map.get(key) || {
-        month: key,
-        income: 0,
-        expense: 0,
-      };
-
-      if (rent.status === 'PAID') {
-        row.income += rent.amount;
-      }
-
+      const row = map.get(key) || { month: key, income: 0, expense: 0 };
+      if (rent.status === 'PAID') row.income += rent.amount;
       map.set(key, row);
     });
-
-    this.summary?.expenses.forEach((expense) => {
-      const date = new Date(expense.date);
-
-      const key = date.toLocaleString('en-IN', {
-        month: 'long',
-        year: 'numeric',
-      });
-
-      const row = map.get(key) || {
-        month: key,
-        income: 0,
-        expense: 0,
-      };
-
-      row.expense += expense.amount;
-
+    this.summary?.expenses.forEach(exp => {
+      const d = new Date(exp.date);
+      const key = d.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+      const row = map.get(key) || { month: key, income: 0, expense: 0 };
+      row.expense += exp.amount;
       map.set(key, row);
     });
-
     return [...map.values()];
   }
 
+  barPct(val: number) {
+    const max = Math.max(this.summary?.totalIncome || 0, this.summary?.totalExpenses || 0, 1);
+    return Math.max(0, Math.min(100, (val / max) * 100));
+  }
+
+  tenantName(rent: any) {
+    return typeof rent.tenantId === 'object' ? rent.tenantId?.name : rent.tenantId;
+  }
+
   exportCsv() {
-    const rows = [['Report', 'Month/Date', 'Amount', 'Status']];
-
-    this.summary?.rents.forEach((rent) =>
-      rows.push([
-        'Rent',
-        `${rent.month} ${rent.year}`,
-        String(rent.amount),
-        rent.status,
-      ]),
-    );
-
-    this.summary?.expenses.forEach((expense) =>
-      rows.push([
-        'Expense',
-        String(expense.date),
-        String(expense.amount),
-        expense.category,
-      ]),
-    );
-
-    const csv = rows
-      .map((row) =>
-        row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(','),
-      )
-      .join('\n');
-
-    const url = URL.createObjectURL(
-      new Blob([csv], {
-        type: 'text/csv',
-      }),
-    );
-
-    const link = document.createElement('a');
-
-    link.href = url;
-
-    link.download = 'hostel-report.csv';
-
-    link.click();
-
-    URL.revokeObjectURL(url);
+    const rows = [['Type', 'Month/Date', 'Amount', 'Status/Category']];
+    this.summary?.rents.forEach(r => rows.push(['Rent', `${r.month} ${r.year}`, String(r.amount), r.status]));
+    this.summary?.expenses.forEach(e => rows.push(['Expense', String(e.date).slice(0,10), String(e.amount), e.category]));
+    const csv = rows.map(r => r.map(c => `"${String(c).replaceAll('"','""')}"`).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `hostel-report-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
   }
 
-  print() {
-    window.print();
-  }
+  print() { window.print(); }
 }

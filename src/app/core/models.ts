@@ -13,6 +13,15 @@ export interface Room {
   status?: 'OCCUPIED' | 'VACANT';
   occupiedBeds?: number;
   beds?: Array<{ name: string; bedNo: number }>;
+  // Amenities
+  ac?: boolean;
+  tv?: boolean;
+  fridge?: boolean;
+  fan?: boolean;
+  heater?: boolean;
+  wifi?: boolean;
+  wardrobe?: boolean;
+  attachedBath?: boolean;
 }
 
 export interface Tenant {
@@ -48,7 +57,14 @@ export interface Expense {
   _id?: string;
   title: string;
   amount: number;
-  category: 'Electricity' | 'Water' | 'Maintenance' | 'Food' | 'Salary' | 'Internet' | 'Repairs';
+  category:
+    | 'Electricity'
+    | 'Water'
+    | 'Maintenance'
+    | 'Food'
+    | 'Salary'
+    | 'Internet'
+    | 'Repairs';
   date: string;
   notes?: string;
   bill?: FileRef;

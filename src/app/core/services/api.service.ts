@@ -10,6 +10,13 @@ export const FILE_URL = environment.fileUrl;
 export class ApiService {
   private http = inject(HttpClient);
 
+  auth = {
+    createTenantUser: (name: string, email: string) =>
+      this.http.post<{ user: { id: string; email: string }; password: string }>(`${API_URL}/auth/create-tenant-user`, { name, email }),
+    tenantCredentials: () =>
+      this.http.get<{ name: string; email: string; plainPassword: string; createdAt: string }[]>(`${API_URL}/auth/tenant-credentials`)
+  };
+
   rooms = {
     list: () => this.http.get<Room[]>(`${API_URL}/rooms`),
     create: (data: Room) => this.http.post<Room>(`${API_URL}/rooms`, data),
