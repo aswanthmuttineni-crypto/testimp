@@ -246,10 +246,34 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
       background: linear-gradient(135deg,#14b8a6,#0d9488);
       color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
     }
+    .auth-switch {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 13px;
+      color: #64748b;
+    }
+    .link-btn {
+      border: none;
+      background: transparent;
+      color: #0d9488;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+    .success-msg {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+    }
   `],
   template: `
     <section class="login-page">
-      <form class="login-card" [class.tenant-mode]="role === 'TENANT'" (ngSubmit)="login()">
+      <form class="login-card" [class.tenant-mode]="role === 'TENANT'" (ngSubmit)="submit()">
 
         <div class="brand">
           <div class="brand-icon">🏠</div>
@@ -259,6 +283,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
           </div>
         </div>
 
+        @if (!registerMode) {
         <div class="role-tabs">
           <button type="button" class="role-tab" [class.active]="role === 'ADMIN'" (click)="setRole('ADMIN')">
             <span class="tab-icon">🛡️</span>
@@ -269,9 +294,14 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
             <span class="tab-label">Tenant</span>
           </button>
         </div>
+        }
 
         <div class="welcome">
-          @if (role === 'ADMIN') {
+          @if (registerMode) {
+            <span class="role-badge admin">Admin Registration</span>
+            <h1>Create admin account</h1>
+            <p>Enter details, receive a verification code, then complete registration.</p>
+          } @else if (role === 'ADMIN') {
             <span class="role-badge admin">🛡️ Admin Access</span>
             <h1>Welcome back, Admin</h1>
             <p>Sign in to manage rooms, tenants, rent &amp; expenses.</p>
@@ -283,20 +313,53 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
         </div>
 
         <div class="fields">
-          <label class="field-label">Email
-            <input type="email" [(ngModel)]="email" name="email" autocomplete="username"
-              [placeholder]="role === 'ADMIN' ? 'admin@gmail.com' : 'tenant@email.com'" required />
-          </label>
-          <label class="field-label">Password
-            <input type="password" [(ngModel)]="password" name="password" autocomplete="current-password" placeholder="••••••••" required />
-          </label>
+          @if (registerMode && !verificationSent) {
+            <label class="field-label">Name
+              <input type="text" [(ngModel)]="registerName" name="registerName" autocomplete="name" placeholder="Admin name" required />
+            </label>
+            <label class="field-label">Email
+              <input type="email" [(ngModel)]="email" name="email" autocomplete="username" placeholder="admin@example.com" required />
+            </label>
+            <label class="field-label">WhatsApp Number
+              <input type="tel" [(ngModel)]="registerPhone" name="registerPhone" placeholder="919876543210" />
+            </label>
+            <label class="field-label">Password
+              <input type="password" [(ngModel)]="password" name="password" autocomplete="new-password" placeholder="Minimum 6 characters" required />
+            </label>
+          } @else if (registerMode && verificationSent) {
+            <label class="field-label">Verification Code
+              <input type="text" [(ngModel)]="verificationCode" name="verificationCode" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit code" required />
+            </label>
+          } @else {
+            <label class="field-label">Email
+              <input type="email" [(ngModel)]="email" name="email" autocomplete="username"
+                [placeholder]="role === 'ADMIN' ? 'admin@gmail.com' : 'tenant@email.com'" required />
+            </label>
+            <label class="field-label">Password
+              <input type="password" [(ngModel)]="password" name="password" autocomplete="current-password" placeholder="••••••••" required />
+            </label>
+          }
         </div>
 
         <button type="submit" class="submit-btn" [class.admin-btn]="role === 'ADMIN'" [class.tenant-btn]="role === 'TENANT'">
-          {{ role === 'ADMIN' ? '🛡️ Sign in as Admin' : '👤 Sign in as Tenant' }}
+          @if (registerMode) {
+            {{ verificationSent ? 'Verify code and create admin' : 'Send verification code' }}
+          } @else {
+            {{ role === 'ADMIN' ? '🛡️ Sign in as Admin' : '👤 Sign in as Tenant' }}
+          }
         </button>
 
+        @if (notice) { <p class="success-msg">{{ notice }}</p> }
         @if (error) { <p class="error-msg">{{ error }}</p> }
+        <div class="auth-switch">
+          @if (registerMode) {
+            Already registered?
+            <button type="button" class="link-btn" (click)="showLogin()">Sign in</button>
+          } @else if (role === 'ADMIN') {
+            New admin?
+            <button type="button" class="link-btn" (click)="showRegister()">Create account</button>
+          }
+        </div>
       </form>
     </section>
 
@@ -335,6 +398,12 @@ export class LoginComponent {
   email = 'admin@gmail.com';
   password = 'admin123';
   error = '';
+  notice = '';
+  registerMode = false;
+  verificationSent = false;
+  registerName = '';
+  registerPhone = '';
+  verificationCode = '';
   tenantCreds: TenantCred[] | null = null;
 
   setRole(r: 'ADMIN' | 'TENANT') {
@@ -342,6 +411,63 @@ export class LoginComponent {
     this.email = '';
     this.password = '';
     this.error = '';
+    this.notice = '';
+  }
+
+  submit() {
+    if (this.registerMode) {
+      this.verificationSent ? this.verifyRegistration() : this.requestRegistrationCode();
+      return;
+    }
+    this.login();
+  }
+
+  showRegister() {
+    this.registerMode = true;
+    this.verificationSent = false;
+    this.role = 'ADMIN';
+    this.email = '';
+    this.password = '';
+    this.error = '';
+    this.notice = '';
+  }
+
+  showLogin() {
+    this.registerMode = false;
+    this.verificationSent = false;
+    this.email = 'admin@gmail.com';
+    this.password = 'admin123';
+    this.error = '';
+    this.notice = '';
+  }
+
+  requestRegistrationCode() {
+    if (this.password.length < 6) {
+      this.error = 'Password must be at least 6 characters.';
+      return;
+    }
+    this.error = '';
+    this.notice = '';
+    this.auth.requestAdminRegistration({
+      name: this.registerName,
+      email: this.email,
+      phone: this.registerPhone,
+      password: this.password
+    }).subscribe({
+      next: (res) => {
+        this.verificationSent = true;
+        this.notice = res.devCode ? `${res.message}. Local code: ${res.devCode}` : res.message;
+      },
+      error: (err: any) => (this.error = err.error?.message || 'Failed to send verification code')
+    });
+  }
+
+  verifyRegistration() {
+    this.error = '';
+    this.auth.verifyAdminRegistration(this.email, this.verificationCode).subscribe({
+      next: () => this.router.navigateByUrl('/dashboard'),
+      error: (err: any) => (this.error = err.error?.message || 'Verification failed')
+    });
   }
 
   login() {
@@ -356,7 +482,7 @@ export class LoginComponent {
             }
           });
         } else {
-          this.router.navigateByUrl('/dashboard');
+          this.router.navigateByUrl('/tenant');
         }
       },
       error: (err: any) => (this.error = err.error?.message || 'Login failed')

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
-import { Summary } from '../../core/models';
+import { AgingRow, Summary } from '../../core/models';
 
 @Component({
   selector: 'app-reports',
@@ -73,7 +73,13 @@ import { Summary } from '../../core/models';
     .badge.paid { background: #dcfce7; color: #15803d; }
     .badge.pending { background: #fef9c3; color: #a16207; }
 
-    /* EMPTY / LOADING */
+    /* AGING */
+    .aging-badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:800; }
+    .aging-1 { background:#fef9c3; color:#a16207; }
+    .aging-2 { background:#ffedd5; color:#c2410c; }
+    .aging-3 { background:#fee2e2; color:#b91c1c; }
+    .aging-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
+    .aging-dot-1 { background:#d97706; } .aging-dot-2 { background:#ea580c; } .aging-dot-3 { background:#dc2626; }
     .empty { padding: 40px; text-align: center; color: #94a3b8; border: 2px dashed #e2e8f0; border-radius: 16px; }
     .loading { padding: 60px; text-align: center; color: #94a3b8; }
 
@@ -175,6 +181,53 @@ import { Summary } from '../../core/models';
           }
         </div>
 
+        <!-- AGING -->
+        <div class="panel" style="padding:24px;">
+          <div class="panel-hdr">
+            <h2>⏳ Rent Aging</h2>
+            <small style="color:#64748b;font-weight:600;">{{ agingRows.length }} tenants with overdue rent</small>
+          </div>
+          @if (agingRows.length) {
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tenant</th>
+                    <th>Room</th>
+                    <th>Overdue Months</th>
+                    <th>Bucket</th>
+                    <th>Total Due</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of agingRows; track row.tenantId) {
+                    <tr>
+                      <td><strong>{{ row.name }}</strong><br><small style="color:#64748b;">{{ row.phone }}</small></td>
+                      <td>{{ row.room }}</td>
+                      <td>{{ row.overdueMonths.length }}</td>
+                      <td>
+                        <span class="aging-badge"
+                          [class.aging-1]="row.overdueMonths.length === 1"
+                          [class.aging-2]="row.overdueMonths.length === 2"
+                          [class.aging-3]="row.overdueMonths.length >= 3">
+                          <span class="aging-dot"
+                            [class.aging-dot-1]="row.overdueMonths.length === 1"
+                            [class.aging-dot-2]="row.overdueMonths.length === 2"
+                            [class.aging-dot-3]="row.overdueMonths.length >= 3"></span>
+                          {{ row.overdueMonths.length === 1 ? '1 Month' : row.overdueMonths.length === 2 ? '2 Months' : '3+ Months' }}
+                        </span>
+                      </td>
+                      <td style="color:#dc2626;font-weight:700;">{{ row.totalOverdue | currency:'INR':'symbol':'1.0-0' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="empty">🎉 No overdue rent — all tenants are up to date.</div>
+          }
+        </div>
+
         <!-- RENT + EXPENSE LISTS -->
         <div class="two-col">
           <div class="panel" style="padding:24px;">
@@ -224,8 +277,12 @@ import { Summary } from '../../core/models';
 export class ReportsComponent implements OnInit {
   private api = inject(ApiService);
   summary?: Summary;
+  agingRows: AgingRow[] = [];
 
-  ngOnInit() { this.api.reports.summary().subscribe(s => this.summary = s); }
+  ngOnInit() {
+    this.api.reports.summary().subscribe(s => this.summary = s);
+    this.api.reports.aging().subscribe(rows => this.agingRows = rows);
+  }
 
   monthlyRows() {
     const map = new Map<string, { month: string; income: number; expense: number }>();

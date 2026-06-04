@@ -1,3 +1,13 @@
+export interface AgingRow {
+  tenantId: string;
+  name: string;
+  phone: string;
+  room: string;
+  monthlyRent: number;
+  overdueMonths: { month: string; year: number; amount: number }[];
+  totalOverdue: number;
+}
+
 export interface FileRef {
   filename?: string;
   path?: string;

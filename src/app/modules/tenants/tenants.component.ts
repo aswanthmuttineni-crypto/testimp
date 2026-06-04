@@ -392,12 +392,14 @@ export class TenantsComponent implements OnInit {
     });
     if (this.file) data.append('idProof', this.file);
     const isNew = !this.form._id;
+    const tenantName = this.form.name;
+    const tenantEmail = this.form.email;
     const req = isNew ? this.api.tenants.create(data) : this.api.tenants.update(this.form._id!, data);
     req.subscribe((tenant) => {
       this.closeModal();
       this.load();
-      if (isNew && this.form.email) {
-        this.api.auth.createTenantUser(this.form.name, this.form.email).subscribe({
+      if (isNew && tenantEmail) {
+        this.api.auth.createTenantUser(tenantName, tenantEmail).subscribe({
           next: (res) => (this.createdCreds = { email: res.user.email, password: res.password }),
           error: () => {} // user may already exist, ignore
         });

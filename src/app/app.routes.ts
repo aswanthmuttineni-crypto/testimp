@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { adminGuard, authGuard, homeRedirectGuard, tenantShellGuard } from './core/guards/auth.guard';
 import { LoginComponent } from './modules/auth/login.component';
 import { DashboardComponent } from './modules/dashboard/dashboard.component';
 import { ExpensesComponent } from './modules/expenses/expenses.component';
@@ -9,6 +9,7 @@ import { ReportsComponent } from './modules/reports/reports.component';
 import { RoomsComponent } from './modules/rooms/rooms.component';
 import { SettingsComponent } from './modules/settings/settings.component';
 import { TenantsComponent } from './modules/tenants/tenants.component';
+import { TenantPortalComponent } from './modules/tenant-portal/tenant-portal.component';
 import { LayoutComponent } from './shared/layout/layout.component';
 
 export const routes: Routes = [
@@ -18,15 +19,17 @@ export const routes: Routes = [
     path: '',
     component: LayoutComponent,
     canActivate: [authGuard],
+    canActivateChild: [tenantShellGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', component: DashboardComponent },
-      { path: 'rooms', component: RoomsComponent },
-      { path: 'tenants', component: TenantsComponent },
-      { path: 'rents', component: RentsComponent },
-      { path: 'expenses', component: ExpensesComponent },
-      { path: 'reports', component: ReportsComponent },
-      { path: 'settings', component: SettingsComponent }
+      { path: '', pathMatch: 'full', canActivate: [homeRedirectGuard], component: DashboardComponent },
+      { path: 'tenant', component: TenantPortalComponent },
+      { path: 'dashboard', component: DashboardComponent, canActivate: [adminGuard] },
+      { path: 'rooms', component: RoomsComponent, canActivate: [adminGuard] },
+      { path: 'tenants', component: TenantsComponent, canActivate: [adminGuard] },
+      { path: 'rents', component: RentsComponent, canActivate: [adminGuard] },
+      { path: 'expenses', component: ExpensesComponent, canActivate: [adminGuard] },
+      { path: 'reports', component: ReportsComponent, canActivate: [adminGuard] },
+      { path: 'settings', component: SettingsComponent, canActivate: [adminGuard] }
     ]
   },
   { path: '**', redirectTo: 'dashboard' }

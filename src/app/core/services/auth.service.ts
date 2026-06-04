@@ -32,7 +32,8 @@ export class AuthService {
   }
 
   get role(): 'ADMIN' | 'TENANT' | null {
-    return this.user?.role || null;
+    const role = String(this.user?.role || '').toUpperCase();
+    return role === 'ADMIN' || role === 'TENANT' ? role : null;
   }
 
   get isAdmin(): boolean {
@@ -45,6 +46,19 @@ export class AuthService {
 
   login(email: string, password: string) {
     return this.http.post<{ token: string; user: AuthUser }>(`${API_URL}/auth/login`, { email, password }).pipe(
+      tap((res) => {
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('user', JSON.stringify(res.user));
+      })
+    );
+  }
+
+  requestAdminRegistration(data: { name: string; email: string; phone?: string; password: string }) {
+    return this.http.post<{ message: string; sent: string[]; devCode?: string }>(`${API_URL}/auth/register`, data);
+  }
+
+  verifyAdminRegistration(email: string, code: string) {
+    return this.http.post<{ token: string; user: AuthUser }>(`${API_URL}/auth/register/verify`, { email, code }).pipe(
       tap((res) => {
         localStorage.setItem('token', res.token);
         localStorage.setItem('user', JSON.stringify(res.user));

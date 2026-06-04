@@ -1,5 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 
@@ -14,6 +15,10 @@ const NAV = [
   { path: '/reports', icon: '📈', label: 'Reports', sub: 'Income & exports' },
   { path: '/settings', icon: '⚙️', label: 'Settings', sub: 'Config' },
   { path: '/public', icon: '🌐', label: 'Public Page', sub: 'Guest display' },
+];
+
+const TENANT_NAV = [
+  { path: '/tenant', icon: '👤', label: 'My KYC', sub: 'Tenant details' },
 ];
 
 @Component({
@@ -140,7 +145,7 @@ const NAV = [
       <aside class="sidebar" [class.open]="menuOpen()">
         <div class="brand">
           <div class="brand-icon">H</div>
-          <div><strong>Hostel MS</strong><small>Operations desk</small></div>
+          <div><strong>Hostel MS</strong><small>{{ auth.isAdmin ? 'Operations desk' : 'Tenant Portal' }}</small></div>
         </div>
         <nav class="sidebar-nav">
           @for (item of navItems; track item.path) {
@@ -222,12 +227,22 @@ const NAV = [
     }
   `
 })
-export class LayoutComponent {
+export class LayoutComponent implements OnInit {
   auth = inject(AuthService);
   private api = inject(ApiService);
-  navItems = NAV;
+  private router = inject(Router);
+  get navItems() {
+    return this.auth.isAdmin ? NAV : TENANT_NAV;
+  }
   menuOpen = signal(false);
   tenantCreds = signal<TenantCred[] | null>(null);
+
+  ngOnInit() {
+    this.enforceTenantRoute(this.router.url);
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => this.enforceTenantRoute(event.urlAfterRedirects));
+  }
 
   openCreds() {
     this.menuOpen.set(false);
@@ -235,5 +250,10 @@ export class LayoutComponent {
       next: (creds) => this.tenantCreds.set(creds),
       error: () => this.tenantCreds.set([])
     });
+  }
+
+  private enforceTenantRoute(url: string) {
+    if (!this.auth.isTenant) return;
+    if (!url.startsWith('/tenant')) this.router.navigateByUrl('/tenant');
   }
 }
