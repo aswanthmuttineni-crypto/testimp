@@ -1,12 +1,16 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { NgChartsModule } from 'ng2-charts';
+import { Chart, ChartData, ChartOptions, ArcElement, BarController, BarElement, CategoryScale, DoughnutController, Legend, LinearScale, PieController, Title, Tooltip } from 'chart.js';
 import { ApiService } from '../../core/services/api.service';
 import { AgingRow, Summary } from '../../core/models';
+
+Chart.register(ArcElement, BarController, BarElement, CategoryScale, DoughnutController, Legend, LinearScale, PieController, Title, Tooltip);
 
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe],
+  imports: [CommonModule, CurrencyPipe, DatePipe, NgChartsModule],
   styles: [`
     .page { display: grid; gap: 24px; }
 
@@ -38,6 +42,24 @@ import { AgingRow, Summary } from '../../core/models';
     .profit-section { padding: 24px; border-radius: 20px; background: #fff; border: 1px solid #e2e8f0; }
     .profit-section h2 { margin: 0 0 20px; font-size: 18px; }
     .bar-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+    .chart-grid { display: grid; gap: 20px; margin-top: 24px; }
+    .chart-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(240px,1fr)); gap: 18px; }
+    .chart-card { padding: 24px; border-radius: 20px; background: #fff; border: 1px solid #e2e8f0; }
+    .chart-card h3 { margin: 0 0 16px; font-size: 16px; }
+    .chart-canvas { min-height: 240px; display: grid; place-items: center; }
+    .chart-panel { padding: 24px; border-radius: 20px; background: #fff; border: 1px solid #e2e8f0; }
+    .chart-panel h2 { margin: 0 0 18px; font-size: 18px; }
+    .chart-bar-row { display: grid; grid-template-columns: 1fr 2fr 2fr 1fr; gap: 12px; align-items: center; margin-bottom: 14px; }
+    .chart-bar-row strong { font-size: 13px; }
+    .tiny-bar { height: 10px; border-radius: 999px; background: #e2e8f0; overflow: hidden; width: 100%; }
+    .tiny-fill { display: block; height: 100%; border-radius: inherit; }
+    .tiny-fill.income { background: linear-gradient(90deg,#0d9488,#2dd4bf); }
+    .tiny-fill.expense { background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+    .bucket-list { display: grid; gap: 12px; }
+    .bucket-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-radius: 16px; background: #f8fafc; }
+    .bucket-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .bucket-label { display: flex; align-items: center; gap: 10px; color: #0f172a; font-weight: 700; }
+    .bucket-count { color: #64748b; font-size: 12px; }
     .bar-label { width: 80px; font-size: 12px; font-weight: 700; color: #475569; flex-shrink: 0; }
     .bar-track { flex: 1; height: 12px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
     .bar-fill { height: 100%; border-radius: inherit; transition: width 0.5s; }
@@ -136,6 +158,53 @@ import { AgingRow, Summary } from '../../core/models';
             <span class="bar-label">Profit</span>
             <div class="bar-track"><div class="bar-fill profit" [style.width.%]="barPct(summary.profit)"></div></div>
             <span class="bar-val">{{ summary.profit | currency:'INR':'symbol':'1.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="chart-grid-3">
+            <div class="chart-card">
+              <h3>Monthly Income vs Expense</h3>
+              <div class="chart-canvas">
+                <canvas baseChart
+                  [data]="barChartData"
+                  [options]="barChartOptions"
+                  [type]="barChartType">
+                </canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3>Profit / Expense / Pending</h3>
+              <div class="chart-canvas">
+                <canvas baseChart
+                  [data]="doughnutChartData"
+                  [options]="doughnutChartOptions"
+                  [type]="doughnutChartType">
+                </canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3>Room Occupancy</h3>
+              <div class="chart-canvas">
+                <canvas baseChart
+                  [data]="pieChartData"
+                  [options]="pieChartOptions"
+                  [type]="pieChartType">
+                </canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-panel">
+            <div class="panel-hdr"><h2>Rent Aging Summary</h2></div>
+            <div class="bucket-list">
+              @for (bucket of agingBuckets(); track bucket.label) {
+                <div class="bucket-item">
+                  <div class="bucket-label"><span class="bucket-dot" [style.background]="bucket.color"></span>{{ bucket.label }}</div>
+                  <div><span class="bucket-count">{{ bucket.count }} tenants</span></div>
+                </div>
+              }
+            </div>
           </div>
         </div>
 
@@ -278,9 +347,52 @@ export class ReportsComponent implements OnInit {
   private api = inject(ApiService);
   summary?: Summary;
   agingRows: AgingRow[] = [];
+  barChartType: 'bar' = 'bar';
+  barChartData: ChartData<'bar'> = {
+    labels: [],
+    datasets: [
+      { data: [], label: 'Income', backgroundColor: '#0d9488' },
+      { data: [], label: 'Expense', backgroundColor: '#f59e0b' }
+    ]
+  };
+  barChartOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { stacked: false },
+      y: { beginAtZero: true }
+    },
+    plugins: {
+      legend: { position: 'bottom' },
+      title: { display: false }
+    }
+  };
+  doughnutChartType: 'doughnut' = 'doughnut';
+  doughnutChartData: ChartData<'doughnut'> = {
+    labels: ['Profit', 'Expenses', 'Pending Rent'],
+    datasets: [{ data: [0, 0, 0], backgroundColor: ['#0d9488', '#f59e0b', '#6366f1'] }]
+  };
+  doughnutChartOptions: ChartOptions<'doughnut'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } }
+  };
+  pieChartType: 'pie' = 'pie';
+  pieChartData: ChartData<'pie'> = {
+    labels: ['Occupied Rooms', 'Vacant Rooms'],
+    datasets: [{ data: [0, 0], backgroundColor: ['#0d9488', '#f59e0b'] }]
+  };
+  pieChartOptions: ChartOptions<'pie'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } }
+  };
 
   ngOnInit() {
-    this.api.reports.summary().subscribe(s => this.summary = s);
+    this.api.reports.summary().subscribe((s) => {
+      this.summary = s;
+      this.updateChartData();
+    });
     this.api.reports.aging().subscribe(rows => this.agingRows = rows);
   }
 
@@ -305,6 +417,26 @@ export class ReportsComponent implements OnInit {
   barPct(val: number) {
     const max = Math.max(this.summary?.totalIncome || 0, this.summary?.totalExpenses || 0, 1);
     return Math.max(0, Math.min(100, (val / max) * 100));
+  }
+
+  agingBuckets() {
+    return [
+      { label: '1 Month Overdue', count: this.agingRows.filter((row) => row.overdueMonths.length === 1).length, color: '#f59e0b' },
+      { label: '2 Months Overdue', count: this.agingRows.filter((row) => row.overdueMonths.length === 2).length, color: '#fb923c' },
+      { label: '3+ Months Overdue', count: this.agingRows.filter((row) => row.overdueMonths.length >= 3).length, color: '#ef4444' }
+    ];
+  }
+
+  updateChartData() {
+    if (!this.summary) return;
+    const rows = this.monthlyRows();
+    this.barChartData.labels = rows.map((row) => row.month);
+    this.barChartData.datasets = [
+      { data: rows.map((row) => row.income), label: 'Income', backgroundColor: '#0d9488' },
+      { data: rows.map((row) => row.expense), label: 'Expense', backgroundColor: '#f59e0b' }
+    ];
+    this.doughnutChartData.datasets[0].data = [Math.max(0, this.summary.profit), this.summary.totalExpenses, this.summary.pendingRent];
+    this.pieChartData.datasets[0].data = [this.summary.occupiedRooms, this.summary.vacantRooms];
   }
 
   tenantName(rent: any) {

@@ -1,12 +1,18 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { NgChartsModule } from 'ng2-charts';
+import { Chart, ChartConfiguration, ChartData, ChartOptions, ArcElement, BarController, BarElement, CategoryScale, DoughnutController, Legend, LinearScale, PieController, Title, Tooltip } from 'chart.js';
 import { ApiService } from '../../core/services/api.service';
 import { Summary } from '../../core/models';
+
+type TrendRow = { month: string; income: number; expense: number; date: Date };
+
+Chart.register(ArcElement, BarController, BarElement, CategoryScale, DoughnutController, Legend, LinearScale, PieController, Title, Tooltip);
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe],
+  imports: [CommonModule, CurrencyPipe, DatePipe, NgChartsModule],
   styles: [`
     .page { display: grid; gap: 22px; }
     .hero { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 28px 32px; border-radius: 24px; background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; box-shadow: 0 16px 40px rgba(15,23,42,0.15); }
@@ -55,6 +61,32 @@ import { Summary } from '../../core/models';
     .dues-hdr h2 { margin: 0; font-size: 17px; }
     .dues-count { padding: 4px 12px; border-radius: 999px; background: #fee2e2; color: #b91c1c; font-size: 12px; font-weight: 800; }
     .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .chart-panel { padding: 22px; border-radius: 22px; background: #fff; border: 1px solid #e2e8f0; }
+    .chart-panel h2 { margin: 0 0 16px; font-size: 18px; }
+    .chart-grid { display: grid; gap: 18px; }
+    .chart-grid { display: grid; gap: 18px; }
+    .chart-card { padding: 22px; border-radius: 22px; background: #fff; border: 1px solid #e2e8f0; }
+    .chart-card h3 { margin: 0 0 16px; font-size: 16px; }
+    .chart-canvas { min-height: 240px; display: grid; place-items: center; }
+    .chart-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(240px, 1fr)); gap: 18px; }
+    .chart-svg { width: 100%; background: #f8fafc; border-radius: 18px; padding: 18px; }
+    .chart-bars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    .chart-bar { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+    .chart-bar .bar { width: 100%; height: 10px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+    .chart-bar .fill { height: 100%; border-radius: inherit; }
+    .chart-bar.income .fill { background: linear-gradient(90deg,#0d9488,#2dd4bf); }
+    .chart-bar.expense .fill { background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+    .chart-bar.profit .fill { background: linear-gradient(90deg,#6366f1,#818cf8); }
+    .chart-bar small { color: #64748b; font-size: 12px; text-align: center; }
+    @media (max-width: 1100px) { .chart-grid-3 { grid-template-columns: 1fr; } }
+    .chart-bar { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+    .chart-bar .bar { width: 100%; height: 10px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+    .chart-bar .fill { height: 100%; border-radius: inherit; }
+    .chart-bar.income .fill { background: linear-gradient(90deg,#0d9488,#2dd4bf); }
+    .chart-bar.expense .fill { background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+    .chart-bar.profit .fill { background: linear-gradient(90deg,#6366f1,#818cf8); }
+    .chart-bar small { color: #64748b; font-size: 12px; text-align: center; }
+    @media (max-width: 900px) { .chart-bars { grid-template-columns: 1fr; } .trend-row { grid-template-columns: 1fr 1fr; } .trend-value { text-align: left; } }
     table { width: 100%; border-collapse: collapse; }
     thead tr { background: #f8fafc; }
     th { padding: 11px 14px; text-align: left; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
@@ -127,6 +159,42 @@ import { Summary } from '../../core/models';
           </div>
         </div>
 
+        <div class="chart-panel">
+          <div class="panel-hdr"><div><p class="eyebrow">Dashboard Charts</p><h2>Income, Profit & Occupancy</h2></div></div>
+          <div class="chart-grid-3">
+            <div class="chart-card">
+              <h3>Monthly Income vs Expense</h3>
+              <div class="chart-canvas">
+                <canvas baseChart
+                  [data]="barChartData"
+                  [options]="barChartOptions"
+                  [type]="barChartType">
+                </canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3>Profit / Expense / Pending</h3>
+              <div class="chart-canvas">
+                <canvas baseChart
+                  [data]="doughnutChartData"
+                  [options]="doughnutChartOptions"
+                  [type]="doughnutChartType">
+                </canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3>Room Occupancy</h3>
+              <div class="chart-canvas">
+                <canvas baseChart
+                  [data]="pieChartData"
+                  [options]="pieChartOptions"
+                  [type]="pieChartType">
+                </canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="panel" style="padding:22px;">
           <div class="dues-hdr">
             <div>
@@ -176,6 +244,46 @@ import { Summary } from '../../core/models';
 export class DashboardComponent implements OnInit {
   private api = inject(ApiService);
   summary?: Summary;
+  barChartType: 'bar' = 'bar';
+  barChartData: ChartData<'bar'> = {
+    labels: [],
+    datasets: [
+      { data: [], label: 'Income', backgroundColor: '#0d9488' },
+      { data: [], label: 'Expense', backgroundColor: '#f59e0b' }
+    ]
+  };
+  barChartOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { stacked: false },
+      y: { beginAtZero: true }
+    },
+    plugins: {
+      legend: { position: 'bottom' },
+      title: { display: false }
+    }
+  };
+  doughnutChartType: 'doughnut' = 'doughnut';
+  doughnutChartData: ChartData<'doughnut'> = {
+    labels: ['Profit', 'Expenses', 'Pending Rent'],
+    datasets: [{ data: [0, 0, 0], backgroundColor: ['#0d9488', '#f59e0b', '#6366f1'] }]
+  };
+  doughnutChartOptions: ChartOptions<'doughnut'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } }
+  };
+  pieChartType: 'pie' = 'pie';
+  pieChartData: ChartData<'pie'> = {
+    labels: ['Occupied Rooms', 'Vacant Rooms'],
+    datasets: [{ data: [0, 0], backgroundColor: ['#0d9488', '#f59e0b'] }]
+  };
+  pieChartOptions: ChartOptions<'pie'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } }
+  };
   notice = '';
   noticeType: 'info' | 'success' | 'error' = 'info';
   sending = false;
@@ -191,7 +299,22 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.api.reports.summary().subscribe(s => this.summary = s);
+    this.api.reports.summary().subscribe((s) => {
+      this.summary = s;
+      this.updateChartData();
+    });
+  }
+
+  updateChartData() {
+    if (!this.summary) return;
+    const rows = this.trendRows();
+    this.barChartData.labels = rows.map((r) => r.month);
+    this.barChartData.datasets = [
+      { data: rows.map((r) => r.income), label: 'Income', backgroundColor: '#0d9488' },
+      { data: rows.map((r) => r.expense), label: 'Expense', backgroundColor: '#f59e0b' }
+    ];
+    this.doughnutChartData.datasets[0].data = [Math.max(0, this.summary.profit), this.summary.totalExpenses, this.summary.pendingRent];
+    this.pieChartData.datasets[0].data = [this.summary.occupiedRooms, this.summary.vacantRooms];
   }
 
   pct(val: number) {
@@ -201,6 +324,51 @@ export class DashboardComponent implements OnInit {
 
   roomNo(tenant: Summary['monthlyDues']['dues'][number]['tenant']) {
     return typeof tenant.roomId === 'string' ? tenant.roomId : tenant.roomId?.roomNo || '-';
+  }
+
+  trendRows() {
+    const rows = new Map<string, { month: string; income: number; expense: number; date: Date }>();
+
+    this.summary?.rents.forEach((rent) => {
+      const key = `${rent.month} ${rent.year}`;
+      const date = new Date(`${rent.month} 1, ${rent.year}`);
+      const row = rows.get(key) || { month: key, income: 0, expense: 0, date };
+      row.income += rent.amount;
+      rows.set(key, row);
+    });
+
+    this.summary?.expenses.forEach((exp) => {
+      const date = new Date(exp.date);
+      const key = date.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+      const row = rows.get(key) || { month: key, income: 0, expense: 0, date };
+      row.expense += exp.amount;
+      rows.set(key, row);
+    });
+
+    return [...rows.values()].sort((a, b) => a.date.getTime() - b.date.getTime()).slice(-6);
+  }
+
+  chartMax() {
+    const rows = this.trendRows();
+    return Math.max(1, ...rows.flatMap((row) => [row.income, row.expense]));
+  }
+
+  chartPct(value: number) {
+    return Math.max(0, Math.min(100, (value / this.chartMax()) * 100));
+  }
+
+  trendPath(type: 'income' | 'expense') {
+    const rows = this.trendRows();
+    if (!rows.length) return '';
+    const max = this.chartMax();
+    const step = 320 / Math.max(rows.length - 1, 1);
+    return rows
+      .map((row, index) => {
+        const x = 20 + step * index;
+        const y = 160 - (Math.min(row[type], max) / max) * 140;
+        return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+      })
+      .join(' ');
   }
 
   sendDueMail() {

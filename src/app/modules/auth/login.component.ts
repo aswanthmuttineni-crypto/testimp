@@ -333,7 +333,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
           } @else {
             <label class="field-label">Email
               <input type="email" [(ngModel)]="email" name="email" autocomplete="username"
-                [placeholder]="role === 'ADMIN' ? 'admin@gmail.com' : 'tenant@email.com'" required />
+                placeholder="Enter your email" required />
             </label>
             <label class="field-label">Password
               <input type="password" [(ngModel)]="password" name="password" autocomplete="current-password" placeholder="••••••••" required />
@@ -395,8 +395,8 @@ export class LoginComponent {
   private router = inject(Router);
 
   role: 'ADMIN' | 'TENANT' = 'ADMIN';
-  email = 'admin@gmail.com';
-  password = 'admin123';
+  email = '';
+  password = '';
   error = '';
   notice = '';
   registerMode = false;
@@ -435,8 +435,8 @@ export class LoginComponent {
   showLogin() {
     this.registerMode = false;
     this.verificationSent = false;
-    this.email = 'admin@gmail.com';
-    this.password = 'admin123';
+    this.email = '';
+    this.password = '';
     this.error = '';
     this.notice = '';
   }
