@@ -118,6 +118,7 @@ export interface Summary {
   profit: number;
   occupiedRooms: number;
   vacantRooms: number;
+  activeTenantCount: number;
   pendingRent: number;
   currentMonthDues: number;
   monthlyDues: MonthlyDues;

@@ -123,6 +123,14 @@ import { Room, Tenant } from '../../core/models';
     .btn-save { background: linear-gradient(135deg,#14b8a6,#0d9488); color: #fff; }
     .btn-cancel { background: #f1f5f9; color: #0f172a; }
 
+    /* PAGINATION */
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; }
+    .pagination button, .pagination span { padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .pagination button:hover { background: #f1f5f9; }
+    .pagination button.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pagination span { border: none; background: transparent; }
+
     @media (max-width: 768px) {
       .hero { flex-direction: column; align-items: flex-start; padding: 22px; }
       .form-grid { grid-template-columns: 1fr; }
@@ -158,18 +166,18 @@ import { Room, Tenant } from '../../core/models';
       <div class="toolbar">
         <div class="search-box">
           <span>🔍</span>
-          <input [(ngModel)]="search" placeholder="Search by name, phone, room..." />
+          <input [(ngModel)]="search" (input)="currentPage = 1" placeholder="Search by name, phone, room..." />
         </div>
-        <button class="filter-btn" [class.active]="filter==='ALL'" (click)="filter='ALL'">All</button>
-        <button class="filter-btn" [class.active]="filter==='ACTIVE'" (click)="filter='ACTIVE'">Active</button>
-        <button class="filter-btn" [class.active]="filter==='INACTIVE'" (click)="filter='INACTIVE'">Inactive</button>
+        <button class="filter-btn" [class.active]="filter==='ALL'" (click)="filter='ALL'; currentPage = 1">All</button>
+        <button class="filter-btn" [class.active]="filter==='ACTIVE'" (click)="filter='ACTIVE'; currentPage = 1">Active</button>
+        <button class="filter-btn" [class.active]="filter==='INACTIVE'" (click)="filter='INACTIVE'; currentPage = 1">Inactive</button>
       </div>
 
       <!-- TABLE -->
       <div class="panel" style="padding:24px;">
         <div class="panel-hdr">
           <h2>Tenant Directory</h2>
-          <span class="count-chip">{{ filtered().length }} tenants</span>
+          <span class="count-chip">Page {{ currentPage }} of {{ totalPages() }} ({{ allFiltered().length }} total)</span>
         </div>
 
         @if (filtered().length) {
@@ -222,6 +230,17 @@ import { Room, Tenant } from '../../core/models';
               </tbody>
             </table>
           </div>
+
+          <!-- PAGINATION -->
+          @if (totalPages() > 1) {
+            <div class="pagination">
+              <button (click)="previousPage()" [disabled]="currentPage === 1">← Prev</button>
+              @for (page of pageNumbers(); track page) {
+                <button [class.active]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
+              }
+              <button (click)="nextPage()" [disabled]="currentPage === totalPages()">Next →</button>
+            </div>
+          }
         } @else {
           <div class="empty">
             @if (search || filter !== 'ALL') {
@@ -351,6 +370,8 @@ export class TenantsComponent implements OnInit {
   showModal = false;
   search = '';
   filter: 'ALL' | 'ACTIVE' | 'INACTIVE' = 'ALL';
+  currentPage = 1;
+  itemsPerPage = 10;
 
   ngOnInit() { this.load(); }
 
@@ -360,12 +381,46 @@ export class TenantsComponent implements OnInit {
   }
 
   filtered() {
+    const all = this.tenants.filter(t => {
+      const matchFilter = this.filter === 'ALL' || t.status === this.filter;
+      const q = this.search.toLowerCase();
+      const matchSearch = !q || t.name.toLowerCase().includes(q) || t.phone.includes(q) || this.roomNo(t)?.toLowerCase().includes(q);
+      return matchFilter && matchSearch;
+    });
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return all.slice(start, start + this.itemsPerPage);
+  }
+
+  allFiltered() {
     return this.tenants.filter(t => {
       const matchFilter = this.filter === 'ALL' || t.status === this.filter;
       const q = this.search.toLowerCase();
       const matchSearch = !q || t.name.toLowerCase().includes(q) || t.phone.includes(q) || this.roomNo(t)?.toLowerCase().includes(q);
       return matchFilter && matchSearch;
     });
+  }
+
+  totalPages() {
+    return Math.ceil(this.allFiltered().length / this.itemsPerPage) || 1;
+  }
+
+  pageNumbers() {
+    const total = this.totalPages();
+    const pages = [];
+    for (let i = 1; i <= total; i++) pages.push(i);
+    return pages;
+  }
+
+  goToPage(page: number) {
+    this.currentPage = page;
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages()) this.currentPage++;
+  }
+
+  previousPage() {
+    if (this.currentPage > 1) this.currentPage--;
   }
 
   activeCount() { return this.tenants.filter(t => t.status === 'ACTIVE').length; }
