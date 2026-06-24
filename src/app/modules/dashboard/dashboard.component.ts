@@ -696,8 +696,7 @@ Chart.register(
               </div>
             </div>
           </div>
-
-          </div>
+        </div>
 
         <div class="chart-panel">
           <div class="panel-hdr">
@@ -817,9 +816,14 @@ Chart.register(
                         <button
                           class="btn-wa"
                           [disabled]="sendingWa[due.tenant._id!]"
-                          (click)="
-                            sendSingleWhatsApp(due.tenant._id!, due.tenant.name)
-                          "
+                          (click)="sendSingleWhatsApp(
+                            due.tenant._id!,
+                            due.tenant.name,
+                            due.tenant.phone,
+                            due.amount,
+                            roomNo(due.tenant),
+                            due.tenant.bedNo
+                          )"
                           title="Send WhatsApp to {{ due.tenant.name }}"
                         >
                           {{ sendingWa[due.tenant._id!] ? '...' : '📱' }}
@@ -1112,7 +1116,24 @@ export class DashboardComponent implements OnInit {
     this.sendDueMail();
   }
 
-  sendSingleWhatsApp(tenantId: string, tenantName: string) {
+  cleanPhoneForWa(phone?: string) {
+    if (!phone) return null;
+    const digits = String(phone).replace(/[^0-9]/g, '');
+    if (!digits) return null;
+    if (digits.length === 10) return `91${digits}`;
+    if (digits.length === 11 && digits.startsWith('0')) return `91${digits.slice(1)}`;
+    if (digits.length >= 11 && digits.startsWith('91')) return digits;
+    return digits;
+  }
+
+  sendSingleWhatsApp(
+    tenantId: string,
+    tenantName: string,
+    tenantPhone?: string,
+    amount?: number,
+    room?: string,
+    bedNo?: number,
+  ) {
     this.sendingWa[tenantId] = true;
     this.api.notifications.sendMonthlyDueWhatsAppSingle(tenantId).subscribe({
       next: (res) => {
@@ -1123,8 +1144,27 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         this.sendingWa[tenantId] = false;
-        this.notice =
-          err.error?.message || `Failed to send WhatsApp to ${tenantName}`;
+        const backendMsg = err.error?.message || '';
+        if (err.status === 501 || backendMsg.includes('WhatsApp API is not configured')) {
+          // Fallback to wa.me click-to-chat
+          const cleaned = this.cleanPhoneForWa(tenantPhone || '');
+          if (!cleaned) {
+            this.notice = `No phone number available for ${tenantName}`;
+            this.noticeType = 'error';
+            return;
+          }
+          const month = this.summary?.monthlyDues?.month || '';
+          const year = this.summary?.monthlyDues?.year || '';
+          const text = `Hello ${tenantName},\n\nYour rent of ₹${amount || ''} for ${month} ${year} is pending.\n\nRoom: ${room || ''}\nBed: ${bedNo ?? ''}\n\nPlease pay at your earliest convenience.\n\nAjs WomanS PG\n📞 8555831614`;
+          const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`;
+          window.open(url, '_blank');
+          this.notice = `Opened WhatsApp chat for ${tenantName}`;
+          this.noticeType = 'success';
+          setTimeout(() => (this.notice = ''), 3000);
+          return;
+        }
+
+        this.notice = backendMsg || `Failed to send WhatsApp to ${tenantName}`;
         this.noticeType = 'error';
       },
     });

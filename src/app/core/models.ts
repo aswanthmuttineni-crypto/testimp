@@ -84,6 +84,7 @@ export interface Settings {
   _id?: string;
   hostelName: string;
   adminEmail: string;
+  adminPhone?: string;
   address: string;
   foodMenu: string;
   weeklyMenu: WeeklyMenuItem[];

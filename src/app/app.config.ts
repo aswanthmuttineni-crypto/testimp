@@ -4,10 +4,14 @@ import { provideRouter, withRouterConfig } from '@angular/router';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { loaderInterceptor } from './core/interceptors/loader.interceptor';
+import { toastInterceptor } from './core/interceptors/toast.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
-    provideHttpClient(withInterceptors([authInterceptor]))
-  ]
+    provideHttpClient(
+      withInterceptors([authInterceptor, loaderInterceptor, toastInterceptor]),
+    ),
+  ],
 };

@@ -140,6 +140,7 @@ const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sun
               <div class="form-grid">
                 <label>Hostel Name <input [(ngModel)]="settings.hostelName" name="hostelName" placeholder="e.g. Sri Sai Hostel" /></label>
                 <label>Admin Email <input type="email" [(ngModel)]="settings.adminEmail" name="adminEmail" placeholder="admin@example.com" /></label>
+                <label>Admin Phone <input type="text" [(ngModel)]="settings.adminPhone" name="adminPhone" placeholder="e.g. 9381097099" /></label>
                 <label>Notification Email <input type="email" [(ngModel)]="settings.notificationEmail" name="notificationEmail" placeholder="notify@example.com" /></label>
                 <label class="full">Address <textarea [(ngModel)]="settings.address" name="address" placeholder="Full hostel address..." rows="3"></textarea></label>
               </div>
@@ -190,6 +191,10 @@ const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sun
               <div class="preview-row">
                 <small>Admin Email</small>
                 <strong>{{ settings.adminEmail || '—' }}</strong>
+              </div>
+              <div class="preview-row">
+                <small>Admin Phone</small>
+                <strong>{{ settings.adminPhone || '—' }}</strong>
               </div>
               <div class="preview-row">
                 <small>Notification Email</small>
