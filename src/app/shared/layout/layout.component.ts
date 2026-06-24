@@ -34,10 +34,13 @@ const TENANT_NAV = [
   { path: '/tenant', icon: '👤', label: 'My KYC', sub: 'Tenant details' },
 ];
 
+import { CommonModule } from '@angular/common';
+
 @Component({
   selector: 'app-layout',
   standalone: true,
   imports: [
+    CommonModule,
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
