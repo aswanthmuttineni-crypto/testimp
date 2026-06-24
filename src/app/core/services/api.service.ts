@@ -1,6 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { AgingRow, Expense, MonthlyDues, Rent, Room, Settings, Summary, Tenant } from '../models';
+import {
+  AgingRow,
+  Expense,
+  MonthlyDues,
+  Rent,
+  Room,
+  Settings,
+  Summary,
+  Tenant,
+} from '../models';
 import { environment } from '../../../environments/environment';
 
 export const API_URL = environment.apiUrl;
@@ -12,60 +21,126 @@ export class ApiService {
 
   auth = {
     createTenantUser: (name: string, email: string) =>
-      this.http.post<{ user: { id: string; email: string }; password: string }>(`${API_URL}/auth/create-tenant-user`, { name, email }),
+      this.http.post<{ user: { id: string; email: string }; password: string }>(
+        `${API_URL}/auth/create-tenant-user`,
+        { name, email },
+      ),
     tenantCredentials: () =>
-      this.http.get<{ name: string; email: string; plainPassword: string; createdAt: string }[]>(`${API_URL}/auth/tenant-credentials`)
+      this.http.get<
+        {
+          name: string;
+          email: string;
+          plainPassword: string;
+          createdAt: string;
+        }[]
+      >(`${API_URL}/auth/tenant-credentials`),
   };
 
   rooms = {
     list: () => this.http.get<Room[]>(`${API_URL}/rooms`),
     create: (data: Room) => this.http.post<Room>(`${API_URL}/rooms`, data),
-    update: (id: string, data: Room) => this.http.put<Room>(`${API_URL}/rooms/${id}`, data),
-    delete: (id: string) => this.http.delete<void>(`${API_URL}/rooms/${id}`)
+    update: (id: string, data: Room) =>
+      this.http.put<Room>(`${API_URL}/rooms/${id}`, data),
+    delete: (id: string) => this.http.delete<void>(`${API_URL}/rooms/${id}`),
   };
 
   tenants = {
     me: () => this.http.get<Tenant>(`${API_URL}/tenants/me`),
-    updateMe: (data: FormData) => this.http.put<Tenant>(`${API_URL}/tenants/me`, data),
+    updateMe: (data: FormData) =>
+      this.http.put<Tenant>(`${API_URL}/tenants/me`, data),
     list: () => this.http.get<Tenant[]>(`${API_URL}/tenants`),
-    create: (data: FormData) => this.http.post<Tenant>(`${API_URL}/tenants`, data),
-    update: (id: string, data: FormData) => this.http.put<Tenant>(`${API_URL}/tenants/${id}`, data),
-    delete: (id: string) => this.http.delete<void>(`${API_URL}/tenants/${id}`)
+    create: (data: FormData) =>
+      this.http.post<Tenant>(`${API_URL}/tenants`, data),
+    update: (id: string, data: FormData) =>
+      this.http.put<Tenant>(`${API_URL}/tenants/${id}`, data),
+    delete: (id: string) => this.http.delete<void>(`${API_URL}/tenants/${id}`),
   };
 
   rents = {
     me: () => this.http.get<Rent[]>(`${API_URL}/rents/me`),
     list: () => this.http.get<Rent[]>(`${API_URL}/rents`),
     create: (data: Rent) => this.http.post<Rent>(`${API_URL}/rents`, data),
-    update: (id: string, data: Rent) => this.http.put<Rent>(`${API_URL}/rents/${id}`, data),
-    delete: (id: string) => this.http.delete<void>(`${API_URL}/rents/${id}`)
+    update: (id: string, data: Rent) =>
+      this.http.put<Rent>(`${API_URL}/rents/${id}`, data),
+    delete: (id: string) => this.http.delete<void>(`${API_URL}/rents/${id}`),
   };
 
   expenses = {
     list: () => this.http.get<Expense[]>(`${API_URL}/expenses`),
-    create: (data: FormData) => this.http.post<Expense>(`${API_URL}/expenses`, data),
-    update: (id: string, data: FormData) => this.http.put<Expense>(`${API_URL}/expenses/${id}`, data),
-    delete: (id: string) => this.http.delete<void>(`${API_URL}/expenses/${id}`)
+    create: (data: FormData) =>
+      this.http.post<Expense>(`${API_URL}/expenses`, data),
+    update: (id: string, data: FormData) =>
+      this.http.put<Expense>(`${API_URL}/expenses/${id}`, data),
+    delete: (id: string) => this.http.delete<void>(`${API_URL}/expenses/${id}`),
   };
 
   reports = {
     summary: () => this.http.get<Summary>(`${API_URL}/reports/summary`),
-    aging: () => this.http.get<AgingRow[]>(`${API_URL}/reports/aging`)
+    aging: () => this.http.get<AgingRow[]>(`${API_URL}/reports/aging`),
   };
 
   settings = {
     get: () => this.http.get<Settings>(`${API_URL}/settings`),
-    update: (data: Partial<Settings>) => this.http.put<Settings>(`${API_URL}/settings`, data),
-    public: () => this.http.get<{ settings: Settings; bills: Expense[]; serverTime: string }>(`${API_URL}/settings/public`)
+    update: (data: Partial<Settings>) =>
+      this.http.put<Settings>(`${API_URL}/settings`, data),
+    public: () =>
+      this.http.get<{
+        settings: Settings;
+        bills: Expense[];
+        serverTime: string;
+      }>(`${API_URL}/settings/public`),
   };
 
   notifications = {
-    monthlyDues: () => this.http.get<MonthlyDues>(`${API_URL}/notifications/monthly-dues`),
+    monthlyDues: () =>
+      this.http.get<MonthlyDues>(`${API_URL}/notifications/monthly-dues`),
     sendMonthlyDueEmails: (adminEmail?: string) =>
-      this.http.post<{ message: string; sent?: string[]; monthlyDues: MonthlyDues }>(`${API_URL}/notifications/monthly-dues/email`, { adminEmail }),
+      this.http.post<{
+        message: string;
+        sent?: string[];
+        monthlyDues: MonthlyDues;
+      }>(`${API_URL}/notifications/monthly-dues/email`, { adminEmail }),
     sendMonthlyDueWhatsApp: () =>
-      this.http.post<{ message: string; sent?: string[]; skipped?: unknown[]; errors?: unknown[]; monthlyDues: MonthlyDues }>(`${API_URL}/notifications/monthly-dues/whatsapp`, {}),
+      this.http.post<{
+        message: string;
+        sent?: string[];
+        skipped?: unknown[];
+        errors?: unknown[];
+        monthlyDues: MonthlyDues;
+      }>(`${API_URL}/notifications/monthly-dues/whatsapp`, {}),
     sendMonthlyDueWhatsAppSingle: (tenantId: string) =>
-      this.http.post<{ message: string }>(`${API_URL}/notifications/monthly-dues/whatsapp-single`, { tenantId })
+      this.http.post<{ message: string }>(
+        `${API_URL}/notifications/monthly-dues/whatsapp-single`,
+        { tenantId },
+      ),
+  };
+
+  foodMenu = {
+    list: () => this.http.get<any[]>(`${API_URL}/food-menu`),
+    public: () => this.http.get<any[]>(`${API_URL}/food-menu/public`),
+    create: (data: any) => this.http.post<any>(`${API_URL}/food-menu`, data),
+    update: (id: string, data: any) =>
+      this.http.put<any>(`${API_URL}/food-menu/${id}`, data),
+    delete: (id: string) =>
+      this.http.delete<void>(`${API_URL}/food-menu/${id}`),
+  };
+
+  complaints = {
+    list: () => this.http.get<any[]>(`${API_URL}/complaints`),
+    me: () => this.http.get<any[]>(`${API_URL}/complaints/me`),
+    create: (data: any) => this.http.post<any>(`${API_URL}/complaints`, data),
+    update: (id: string, data: any) =>
+      this.http.put<any>(`${API_URL}/complaints/${id}`, data),
+    delete: (id: string) =>
+      this.http.delete<void>(`${API_URL}/complaints/${id}`),
+  };
+
+  notices = {
+    public: () => this.http.get<any[]>(`${API_URL}/notices/public`),
+    list: () => this.http.get<any[]>(`${API_URL}/notices`),
+    create: (data: any) => this.http.post<any>(`${API_URL}/notices`, data),
+    update: (id: string, data: any) =>
+      this.http.put<any>(`${API_URL}/notices/${id}`, data),
+    delete: (id: string) => this.http.delete<void>(`${API_URL}/notices/${id}`),
   };
 }
