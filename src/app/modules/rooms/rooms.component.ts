@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { Room, Tenant } from '../../core/models';
@@ -7,7 +7,7 @@ import { Room, Tenant } from '../../core/models';
 @Component({
   selector: 'app-rooms',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe],
+  imports: [CommonModule, FormsModule, CurrencyPipe, DatePipe],
   styles: [`
     .page { display: grid; gap: 24px; }
 
@@ -109,6 +109,24 @@ import { Room, Tenant } from '../../core/models';
     .ditem strong { font-size: 14px; color: #0f172a; }
     .popup-close { width: 100%; margin-top: 18px; padding: 11px; border-radius: 12px; border: 1px solid #e2e8f0; background: #f1f5f9; font-size: 14px; font-weight: 700; cursor: pointer; }
 
+    /* ADD TENANT BTN ON BED */
+    .bed-add { font-size: 10px; font-weight: 800; color: #15803d; background: #dcfce7; border: none; border-radius: 6px; padding: 3px 8px; cursor: pointer; margin-top: 2px; }
+    .bed-add:hover { background: #bbf7d0; }
+
+    /* TENANT FORM MODAL */
+    .tform { width: 100%; max-width: 580px; background: #fff; border-radius: 24px; padding: 28px; box-shadow: 0 30px 80px rgba(2,6,23,0.3); max-height: 92vh; overflow-y: auto; }
+    .tform h2 { margin: 0 0 20px; font-size: 20px; }
+    .tform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .tform-grid label { display: grid; gap: 5px; font-size: 12px; font-weight: 700; color: #475569; }
+    .tform-grid input, .tform-grid select { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 14px; width: 100%; background: #fff; }
+    .tform-grid input:focus, .tform-grid select:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
+    .tform-grid .full { grid-column: 1/-1; }
+    .sec-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin: 14px 0 8px; }
+    .creds-box { margin-top: 16px; padding: 16px; border-radius: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; text-align: center; }
+    .creds-box p { margin: 0 0 6px; font-size: 13px; color: #166534; font-weight: 700; }
+    .creds-box strong { font-size: 22px; letter-spacing: 3px; color: #15803d; }
+    .err-msg { margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: #fee2e2; color: #b91c1c; font-size: 13px; font-weight: 700; }
+
     /* EMPTY */
     .empty { padding: 40px; text-align: center; color: #94a3b8; border: 2px dashed #e2e8f0; border-radius: 16px; }
 
@@ -188,12 +206,16 @@ import { Room, Tenant } from '../../core/models';
                 <!-- BED GRID -->
                 <div class="bed-grid">
                   @for (bed of bedNumbers(room); track bed) {
-                    <div class="bed" [class.occupied]="isFilled(room,bed)" [class.empty]="!isFilled(room,bed)" (click)="isFilled(room,bed) ? viewTenant(tenantForBed(room,bed)) : null">
+                    <div class="bed" [class.occupied]="isFilled(room,bed)" [class.empty]="!isFilled(room,bed)"
+                      (click)="isFilled(room,bed) ? viewTenant(tenantForBed(room,bed)) : null">
                       <div class="bed-no">B{{ bed }}</div>
                       @if (tenantForBed(room, bed)) {
                         <div class="bed-name">{{ tenantForBed(room,bed)?.name }}</div>
                       }
                       <div class="bed-lbl">{{ isFilled(room,bed) ? 'Taken' : 'Free' }}</div>
+                      @if (!isFilled(room, bed)) {
+                        <button class="bed-add" (click)="$event.stopPropagation(); openAddTenant(room, bed)">+ Add</button>
+                      }
                     </div>
                   }
                 </div>
@@ -231,7 +253,63 @@ import { Room, Tenant } from '../../core/models';
       </div>
     }
 
-    <!-- ADD / EDIT MODAL -->
+    <!-- ADD TENANT MODAL -->
+    @if (showTenantModal) {
+      <div class="backdrop" (click)="closeTenantModal()">
+        <div class="tform" (click)="$event.stopPropagation()">
+          <h2>👤 Add Tenant — Room {{ tForm.roomNo }} · Bed {{ tForm.bedNo }}</h2>
+
+          <p class="sec-label">Personal Info</p>
+          <div class="tform-grid">
+            <label>Full Name <input [(ngModel)]="tForm.name" placeholder="Tenant name" /></label>
+            <label>Phone <input [(ngModel)]="tForm.phone" placeholder="10-digit number" /></label>
+            <label>Email <input type="email" [(ngModel)]="tForm.email" placeholder="email@example.com" /></label>
+            <label>Aadhaar <input [(ngModel)]="tForm.aadhaarNo" placeholder="12-digit" /></label>
+            <label>Guardian Name <input [(ngModel)]="tForm.guardianName" /></label>
+            <label>Guardian Phone <input [(ngModel)]="tForm.guardianPhone" /></label>
+          </div>
+
+          <p class="sec-label">Room & Rent</p>
+          <div class="tform-grid">
+            <label>Joining Date <input type="date" [(ngModel)]="tForm.joiningDate" /></label>
+            <label>Monthly Rent <input type="number" [(ngModel)]="tForm.monthlyRent" /></label>
+            <label>Advance Amount <input type="number" [(ngModel)]="tForm.advanceAmount" /></label>
+            <label>Status
+              <select [(ngModel)]="tForm.status">
+                <option>ACTIVE</option>
+                <option>INACTIVE</option>
+              </select>
+            </label>
+            <label class="full">Notes <input [(ngModel)]="tForm.notes" placeholder="Optional notes" /></label>
+          </div>
+
+          <p class="sec-label">ID Proof</p>
+          <div class="tform-grid">
+            <label class="full">Upload ID (Photo/PDF)
+              <input type="file" accept="image/*,.pdf" (change)="tFile = $any($event.target).files[0]" />
+            </label>
+          </div>
+
+          @if (tCreatedCreds) {
+            <div class="creds-box">
+              <p>🔐 Tenant login created! Share these credentials:</p>
+              <div>Email: <strong style="font-size:14px;letter-spacing:0;">{{ tCreatedCreds.email }}</strong></div>
+              <div style="margin-top:6px;">Password: <strong>{{ tCreatedCreds.password }}</strong></div>
+            </div>
+          }
+          @if (tError) { <div class="err-msg">{{ tError }}</div> }
+
+          <div class="modal-actions" style="margin-top:18px;">
+            @if (!tCreatedCreds) {
+              <button class="btn-save" [disabled]="tSaving" (click)="saveTenant()">{{ tSaving ? 'Saving...' : 'Save Tenant' }}</button>
+            }
+            <button class="btn-cancel" (click)="closeTenantModal()">{{ tCreatedCreds ? 'Done' : 'Cancel' }}</button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ADD / EDIT ROOM MODAL -->
     @if (showModal) {
       <div class="backdrop" (click)="closeModal()">
         <div class="modal" (click)="$event.stopPropagation()">
@@ -270,11 +348,67 @@ export class RoomsComponent implements OnInit {
   selectedTenant?: Tenant;
   showModal = false;
 
+  // Add Tenant from bed
+  showTenantModal = false;
+  tSaving = false;
+  tError = '';
+  tFile?: File;
+  tCreatedCreds?: { email: string; password: string };
+  tForm: any = {};
+
   ngOnInit() { this.load(); }
 
   load() {
     this.api.rooms.list().subscribe(r => this.rooms = r);
     this.api.tenants.list().subscribe(t => this.tenants = t);
+  }
+
+  openAddTenant(room: Room, bed: number) {
+    this.tForm = {
+      name: '', phone: '', email: '', aadhaarNo: '',
+      guardianName: '', guardianPhone: '', notes: '',
+      roomId: room._id,
+      roomNo: room.roomNo,
+      bedNo: bed,
+      joiningDate: new Date().toISOString().slice(0, 10),
+      monthlyRent: room.rentAmount,
+      advanceAmount: 0,
+      status: 'ACTIVE'
+    };
+    this.tFile = undefined;
+    this.tError = '';
+    this.tCreatedCreds = undefined;
+    this.showTenantModal = true;
+  }
+
+  closeTenantModal() {
+    this.showTenantModal = false;
+    this.tCreatedCreds = undefined;
+    this.tError = '';
+  }
+
+  saveTenant() {
+    if (!this.tForm.name || !this.tForm.phone) { this.tError = 'Name and phone are required.'; return; }
+    this.tSaving = true; this.tError = '';
+    const data = new FormData();
+    ['name','phone','email','aadhaarNo','guardianName','guardianPhone','notes','roomId','bedNo','joiningDate','monthlyRent','advanceAmount','status']
+      .forEach(k => data.append(k, String(this.tForm[k] ?? '')));
+    if (this.tFile) data.append('idProof', this.tFile);
+    this.api.tenants.create(data).subscribe({
+      next: (tenant) => {
+        this.tSaving = false;
+        this.load();
+        if (this.tForm.email) {
+          this.api.auth.createTenantUser(this.tForm.name, this.tForm.email).subscribe({
+            next: (res) => { this.tCreatedCreds = { email: res.user.email, password: res.password }; },
+            error: () => { this.tCreatedCreds = undefined; }
+          });
+        } else {
+          this.closeTenantModal();
+        }
+      },
+      error: (err: any) => { this.tSaving = false; this.tError = err.error?.message || 'Failed to save tenant.'; }
+    });
   }
 
   openAdd() { this.form = this.empty(); this.showModal = true; }

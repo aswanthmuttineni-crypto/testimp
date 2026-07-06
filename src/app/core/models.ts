@@ -59,8 +59,9 @@ export interface Rent {
   month: string;
   year: number;
   amount: number;
-  paymentDate: string;
+  paymentDate?: string;
   status: 'PAID' | 'PENDING';
+  note?: string;
 }
 
 export interface Expense {

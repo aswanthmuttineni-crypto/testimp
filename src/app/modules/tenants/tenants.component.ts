@@ -160,6 +160,7 @@ import { Room, Tenant } from '../../core/models';
         <div class="scard green"><small>Active</small><strong>{{ activeCount() }}</strong></div>
         <div class="scard red"><small>Inactive</small><strong>{{ tenants.length - activeCount() }}</strong></div>
         <div class="scard"><small>Monthly Income</small><strong style="font-size:18px;">{{ totalRent() | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+        <div class="scard"><small>Total Advance</small><strong style="font-size:18px;">{{ totalAdvance() | currency:'INR':'symbol':'1.0-0' }}</strong></div>
       </div>
 
       <!-- TOOLBAR -->
@@ -270,6 +271,7 @@ import { Room, Tenant } from '../../core/models';
             <div class="ditem"><small>Aadhaar</small><strong>{{ selectedTenant.aadhaarNo || '—' }}</strong></div>
             <div class="ditem"><small>Monthly Rent</small><strong>{{ selectedTenant.monthlyRent | currency:'INR':'symbol':'1.0-0' }}</strong></div>
             <div class="ditem"><small>Advance Paid</small><strong>{{ selectedTenant.advanceAmount | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+            <div class="ditem"><small>Advance Balance</small><strong [style.color]="advanceBalance(selectedTenant) >= 0 ? '#0d9488' : '#ef4444'">{{ advanceBalance(selectedTenant) | currency:'INR':'symbol':'1.0-0' }}</strong></div>
             <div class="ditem"><small>Guardian</small><strong>{{ selectedTenant.guardianName || '—' }}</strong></div>
             <div class="ditem"><small>Guardian Phone</small><strong>{{ selectedTenant.guardianPhone || '—' }}</strong></div>
             <div class="ditem"><small>Address</small><strong>{{ selectedTenant.address || '—' }}</strong></div>
@@ -307,14 +309,20 @@ import { Room, Tenant } from '../../core/models';
           <p class="section-label">Room & Rent</p>
           <div class="form-grid">
             <label>Room
-              <select [(ngModel)]="form.roomId" name="roomId">
+              <select [(ngModel)]="form.roomId" name="roomId" (change)="onRoomChange()">
                 <option value="" disabled>Select room</option>
                 @for (r of rooms; track r._id) {
-                  <option [value]="r._id">{{ r.roomNo }} (Floor {{ r.floor }})</option>
+                  <option [value]="r._id">{{ r.roomNo }} (Floor {{ r.floor }}) — {{ availableBedsInRoom(r) }} free</option>
                 }
               </select>
             </label>
-            <label>Bed Number <input type="number" [(ngModel)]="form.bedNo" name="bedNo" min="1" /></label>
+            <label>Bed Number
+              <select [(ngModel)]="form.bedNo" name="bedNo">
+                @for (b of availableBeds(); track b) {
+                  <option [value]="b">Bed {{ b }}</option>
+                }
+              </select>
+            </label>
             <label>Joining Date <input type="date" [(ngModel)]="form.joiningDate" name="joiningDate" /></label>
             <label>Monthly Rent <input type="number" [(ngModel)]="form.monthlyRent" name="monthlyRent" /></label>
             <label>Advance Amount <input type="number" [(ngModel)]="form.advanceAmount" name="advanceAmount" /></label>
@@ -364,6 +372,7 @@ export class TenantsComponent implements OnInit {
   private api = inject(ApiService);
   rooms: Room[] = [];
   tenants: Tenant[] = [];
+  rents: any[] = [];
   form: Tenant = this.empty();
   file?: File;
   selectedTenant?: Tenant;
@@ -378,6 +387,7 @@ export class TenantsComponent implements OnInit {
   load() {
     this.api.rooms.list().subscribe(r => this.rooms = r);
     this.api.tenants.list().subscribe(t => this.tenants = t);
+    this.api.rents.list().subscribe(r => this.rents = r);
   }
 
   filtered() {
@@ -425,6 +435,55 @@ export class TenantsComponent implements OnInit {
 
   activeCount() { return this.tenants.filter(t => t.status === 'ACTIVE').length; }
   totalRent() { return this.tenants.filter(t => t.status === 'ACTIVE').reduce((s, t) => s + t.monthlyRent, 0); }
+  totalAdvance() { return this.tenants.filter(t => t.status === 'ACTIVE').reduce((s, t) => s + (t.advanceAmount || 0), 0); }
+
+  advanceBalance(tenant: Tenant): number {
+    const paid = this.rents
+      .filter(r => {
+        const id = typeof r.tenantId === 'string' ? r.tenantId : r.tenantId?._id;
+        return id === tenant._id && r.status === 'PAID';
+      })
+      .reduce((s, r) => s + r.amount, 0);
+    const totalDue = this.monthsSince(tenant.joiningDate) * tenant.monthlyRent;
+    return (tenant.advanceAmount || 0) - Math.max(0, totalDue - paid);
+  }
+
+  monthsSince(joiningDate: string): number {
+    const join = new Date(joiningDate);
+    const now = new Date();
+    return Math.max(0, (now.getFullYear() - join.getFullYear()) * 12 + (now.getMonth() - join.getMonth()));
+  }
+
+  onRoomChange() {
+    const room = this.rooms.find(r => r._id === this.form.roomId);
+    if (room) {
+      this.form.monthlyRent = room.rentAmount;
+      const taken = this.takenBedsInRoom(String(room._id));
+      const firstFree = Array.from({ length: room.capacity }, (_, i) => i + 1).find(b => !taken.has(b));
+      this.form.bedNo = firstFree ?? 1;
+    }
+  }
+
+  takenBedsInRoom(roomId: string): Set<number> {
+    return new Set(
+      this.tenants
+        .filter(t => t.status === 'ACTIVE' && String((t.roomId as any)?._id || t.roomId) === roomId && t._id !== this.form._id)
+        .map(t => t.bedNo)
+    );
+  }
+
+  availableBeds(): number[] {
+    const roomId = String(this.form.roomId);
+    const room = this.rooms.find(r => r._id === roomId);
+    if (!room) return [1];
+    const taken = this.takenBedsInRoom(roomId);
+    return Array.from({ length: room.capacity }, (_, i) => i + 1).filter(b => !taken.has(b) || b === this.form.bedNo);
+  }
+
+  availableBedsInRoom(room: Room): number {
+    const taken = this.takenBedsInRoom(String(room._id));
+    return room.capacity - taken.size;
+  }
 
   openAdd() { this.form = this.empty(); this.file = undefined; this.showModal = true; }
   closeModal() { this.showModal = false; this.form = this.empty(); this.file = undefined; }

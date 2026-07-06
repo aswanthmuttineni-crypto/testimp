@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
 import {
   Chart,
@@ -44,7 +45,7 @@ Chart.register(
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, NgChartsModule],
+  imports: [CommonModule, CurrencyPipe, DatePipe, FormsModule, NgChartsModule],
   styles: [
     `
       .page {
@@ -518,6 +519,29 @@ Chart.register(
         border: 2px dashed #e2e8f0;
         border-radius: 14px;
       }
+      /* MONTH FILTER */
+      .month-filter {
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        padding: 16px 20px; border-radius: 18px; background: #fff;
+        border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15,23,42,0.04);
+      }
+      .month-filter label { font-size: 13px; font-weight: 700; color: #475569; }
+      .month-filter select, .month-filter input[type=number] {
+        border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 8px 12px;
+        font-size: 14px; font-weight: 600; background: #f8fafc; color: #0f172a; cursor: pointer;
+      }
+      .month-filter input[type=number] { width: 88px; }
+      .filter-badge {
+        margin-left: auto; padding: 7px 16px; border-radius: 999px;
+        background: linear-gradient(135deg,#ccfbf1,#99f6e4);
+        color: #0f766e; font-size: 13px; font-weight: 800;
+      }
+      .btn-reset {
+        padding: 7px 14px; border-radius: 10px; border: 1.5px solid #e2e8f0;
+        background: #fff; font-size: 12px; font-weight: 700; color: #64748b; cursor: pointer;
+      }
+      .btn-reset:hover { background: #f1f5f9; }
+
       .loading {
         padding: 60px;
         text-align: center;
@@ -551,7 +575,7 @@ Chart.register(
     <div class="page">
       <div class="hero">
         <div class="hero-left">
-          <p>Hostel Management</p>
+          <p>Ajs Deluxe</p>
           <h1>{{ greeting }}, Admin</h1>
           <small>{{ today | date: 'EEEE, dd MMMM yyyy' }}</small>
         </div>
@@ -575,6 +599,21 @@ Chart.register(
             }}
           </button>
         </div>
+      </div>
+
+      <div class="month-filter">
+        <label>Month
+          <select [(ngModel)]="selMonth" (change)="onFilterChange()">
+            @for (m of months; track m) { <option>{{ m }}</option> }
+          </select>
+        </label>
+        <label>Year
+          <input type="number" [(ngModel)]="selYear" (change)="onFilterChange()" />
+        </label>
+        <span class="filter-badge">{{ selMonth }} {{ selYear }}</span>
+        @if (isFiltered()) {
+          <button class="btn-reset" (click)="resetFilter()">✕ All Time</button>
+        }
       </div>
 
       @if (notice) {
@@ -920,6 +959,9 @@ export class DashboardComponent implements OnInit {
     maintainAspectRatio: false,
     plugins: { legend: { position: 'bottom' } },
   };
+  months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  selMonth = this.months[new Date().getMonth()];
+  selYear = new Date().getFullYear();
   notice = '';
   noticeType: 'info' | 'success' | 'error' = 'info';
   sending = false;
@@ -934,11 +976,26 @@ export class DashboardComponent implements OnInit {
     return 'Good Evening';
   }
 
-  ngOnInit() {
-    this.api.reports.summary().subscribe((s) => {
+  ngOnInit() { this.load(); }
+
+  load() {
+    this.api.reports.summary(this.selMonth, this.selYear).subscribe((s) => {
       this.summary = s;
       this.updateChartData();
     });
+  }
+
+  onFilterChange() { this.summary = undefined; this.load(); }
+
+  isFiltered() {
+    const now = new Date();
+    return this.selMonth !== this.months[now.getMonth()] || this.selYear !== now.getFullYear();
+  }
+
+  resetFilter() {
+    this.selMonth = this.months[new Date().getMonth()];
+    this.selYear = new Date().getFullYear();
+    this.onFilterChange();
   }
 
   updateChartData() {
@@ -1155,7 +1212,7 @@ export class DashboardComponent implements OnInit {
           }
           const month = this.summary?.monthlyDues?.month || '';
           const year = this.summary?.monthlyDues?.year || '';
-          const text = `Hello ${tenantName},\n\nYour rent of ₹${amount || ''} for ${month} ${year} is pending.\n\nRoom: ${room || ''}\nBed: ${bedNo ?? ''}\n\nPlease pay at your earliest convenience.\n\nAjs WomanS PG\n📞 8555831614`;
+          const text = `Hello ${tenantName},\n\nYour rent of ₹${amount || ''} for ${month} ${year} is pending.\n\nRoom: ${room || ''}\nBed: ${bedNo ?? ''}\n\nPlease pay at your earliest convenience.\n\nAjs Deluxe\n📞 8555831614`;
           const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`;
           window.open(url, '_blank');
           this.notice = `Opened WhatsApp chat for ${tenantName}`;

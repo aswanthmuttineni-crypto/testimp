@@ -270,6 +270,39 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
       font-weight: 600;
       text-align: center;
     }
+
+    .gate-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(2,6,23,0.7);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; padding: 20px;
+    }
+    .gate-modal {
+      width: 100%; max-width: 380px;
+      background: #fff; border-radius: 24px; padding: 32px;
+      box-shadow: 0 30px 80px rgba(2,6,23,0.3);
+    }
+    .gate-icon { font-size: 36px; text-align: center; margin-bottom: 12px; }
+    .gate-modal h3 { margin: 0 0 6px; font-size: 20px; font-weight: 800; color: #0f172a; text-align: center; }
+    .gate-modal p { margin: 0 0 20px; font-size: 13px; color: #64748b; text-align: center; }
+    .gate-input {
+      width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
+      padding: 12px 14px; font-size: 15px; font-family: inherit;
+      color: #0f172a; letter-spacing: 2px; margin-bottom: 14px;
+    }
+    .gate-input:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.12); }
+    .gate-input.err { border-color: #ef4444; }
+    .gate-err { color: #b91c1c; font-size: 12px; font-weight: 700; margin-bottom: 14px; text-align: center; }
+    .gate-btn {
+      width: 100%; min-height: 46px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg,#14b8a6,#0d9488);
+      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 10px;
+    }
+    .gate-cancel {
+      width: 100%; min-height: 40px; border: 1.5px solid #e2e8f0; border-radius: 12px;
+      background: #fff; color: #64748b; font-size: 13px; font-weight: 700; cursor: pointer;
+    }
   `],
   template: `
     <section class="login-page">
@@ -278,7 +311,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
         <div class="brand">
           <div class="brand-icon">🏠</div>
           <div class="brand-text">
-            <h2>Hostel Management</h2>
+            <h2>Ajs Deluxe</h2>
             <span>Operations Portal</span>
           </div>
         </div>
@@ -363,6 +396,30 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
       </form>
     </section>
 
+    <!-- SECRET KEY GATE -->
+    @if (secretGate) {
+      <div class="gate-backdrop" (click)="secretGate=false; secretKey=''; secretError=''">
+        <div class="gate-modal" (click)="$event.stopPropagation()">
+          <div class="gate-icon">🔑</div>
+          <h3>Secret Key Required</h3>
+          <p>Enter the secret key to create an admin account.</p>
+          <input
+            class="gate-input"
+            [class.err]="!!secretError"
+            type="password"
+            [(ngModel)]="secretKey"
+            name="secretKey"
+            placeholder="Enter secret key"
+            (keydown.enter)="submitSecretKey()"
+            autofocus
+          />
+          @if (secretError) { <div class="gate-err">🚫 {{ secretError }}</div> }
+          <button class="gate-btn" (click)="submitSecretKey()">🔓 Verify & Continue</button>
+          <button class="gate-cancel" (click)="secretGate=false; secretKey=''; secretError=''">Cancel</button>
+        </div>
+      </div>
+    }
+
     <!-- TENANT CREDENTIALS POPUP (admin only) -->
     @if (tenantCreds) {
       <div class="creds-backdrop" (click)="tenantCreds = null">
@@ -400,6 +457,9 @@ export class LoginComponent {
   error = '';
   notice = '';
   registerMode = false;
+  secretGate = false;
+  secretKey = '';
+  secretError = '';
   verificationSent = false;
   registerName = '';
   registerPhone = '';
@@ -423,17 +483,33 @@ export class LoginComponent {
   }
 
   showRegister() {
-    this.registerMode = true;
-    this.verificationSent = false;
-    this.role = 'ADMIN';
-    this.email = '';
-    this.password = '';
+    this.secretGate = true;
+    this.secretKey = '';
+    this.secretError = '';
     this.error = '';
     this.notice = '';
   }
 
+  submitSecretKey() {
+    if (this.secretKey === 'Aswanth@5555') {
+      this.secretGate = false;
+      this.registerMode = true;
+      this.verificationSent = false;
+      this.role = 'ADMIN';
+      this.email = '';
+      this.password = '';
+      this.secretKey = '';
+      this.secretError = '';
+    } else {
+      this.secretError = 'Incorrect secret key. Access denied.';
+    }
+  }
+
   showLogin() {
     this.registerMode = false;
+    this.secretGate = false;
+    this.secretKey = '';
+    this.secretError = '';
     this.verificationSent = false;
     this.email = '';
     this.password = '';

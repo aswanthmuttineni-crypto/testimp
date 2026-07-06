@@ -406,12 +406,10 @@ export class RentsComponent implements OnInit {
   toggleRow(row: { tenant: Tenant; rent?: Rent; status: string }) {
     if (!row.rent?._id) { this.quickPay(row); return; }
     const next = row.rent.status === 'PAID' ? 'PENDING' : 'PAID';
-    this.api.rents.update(row.rent._id, {
-      ...row.rent,
-      tenantId: row.tenant._id!,
-      status: next,
-      paymentDate: String(row.rent.paymentDate).slice(0, 10)
-    }).subscribe(() => this.load());
+    const today = new Date().toISOString().slice(0, 10);
+    const update: any = { tenantId: row.tenant._id!, status: next, month: row.rent.month, year: row.rent.year, amount: row.rent.amount };
+    if (next === 'PAID') update.paymentDate = today;
+    this.api.rents.update(row.rent._id, update).subscribe(() => this.load());
   }
 
   markAllPaid() {
@@ -441,14 +439,17 @@ export class RentsComponent implements OnInit {
   }
 
   editRent(rent: Rent) {
-    this.form = { ...rent, tenantId: typeof rent.tenantId === 'string' ? rent.tenantId : rent.tenantId._id || '', paymentDate: String(rent.paymentDate).slice(0, 10) };
+    const pd = rent.paymentDate ? String(rent.paymentDate).slice(0, 10) : '';
+    this.form = { ...rent, tenantId: typeof rent.tenantId === 'string' ? rent.tenantId : rent.tenantId._id || '', paymentDate: pd };
     this.showModal = true;
   }
 
   closeModal() { this.showModal = false; this.form = this.empty(); }
 
   save() {
-    const req = this.form._id ? this.api.rents.update(this.form._id, this.form) : this.api.rents.create(this.form);
+    const data: any = { ...this.form };
+    if (!data.paymentDate) delete data.paymentDate;
+    const req = data._id ? this.api.rents.update(data._id, data) : this.api.rents.create(data);
     req.subscribe(() => { this.closeModal(); this.load(); });
   }
 

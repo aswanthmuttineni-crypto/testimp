@@ -75,7 +75,11 @@ export class ApiService {
   };
 
   reports = {
-    summary: () => this.http.get<Summary>(`${API_URL}/reports/summary`),
+    summary: (month?: string, year?: number) => {
+      const params: any = {};
+      if (month && year) { params.month = month; params.year = year; }
+      return this.http.get<Summary>(`${API_URL}/reports/summary`, { params });
+    },
     aging: () => this.http.get<AgingRow[]>(`${API_URL}/reports/aging`),
   };
 

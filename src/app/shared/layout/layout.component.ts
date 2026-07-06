@@ -25,6 +25,9 @@ const NAV = [
   { path: '/tenants', icon: '👥', label: 'Tenants', sub: 'People & docs' },
   { path: '/rents', icon: '💰', label: 'Rent', sub: 'Payments & dues' },
   { path: '/expenses', icon: '📉', label: 'Expenses', sub: 'Bills & spending' },
+  { path: '/food-menu', icon: '🍽️', label: 'Food Menu', sub: 'Weekly mess menu' },
+  { path: '/notices', icon: '📋', label: 'Notices', sub: 'Announcements' },
+  { path: '/complaints', icon: '🔔', label: 'Complaints', sub: 'Tenant issues' },
   { path: '/reports', icon: '📈', label: 'Reports', sub: 'Income & exports' },
   { path: '/settings', icon: '⚙️', label: 'Settings', sub: 'Config' },
   { path: '/public', icon: '🌐', label: 'Public Page', sub: 'Guest display' },
@@ -461,7 +464,7 @@ import { CommonModule } from '@angular/common';
         <div class="brand">
           <div class="brand-icon">H</div>
           <div>
-            <strong>Hostel MS</strong
+            <strong>Ajs Deluxe</strong
             ><small>{{
               auth.isAdmin ? 'Operations desk' : 'Tenant Portal'
             }}</small>
@@ -501,7 +504,7 @@ import { CommonModule } from '@angular/common';
         <div class="topbar">
           <div class="topbar-brand">
             <div class="topbar-icon">H</div>
-            <strong>Hostel MS</strong>
+            <strong>Ajs Deluxe</strong>
           </div>
           <button class="hamburger" (click)="menuOpen.set(!menuOpen())">
             ☰
