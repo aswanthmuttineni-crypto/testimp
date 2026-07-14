@@ -9,137 +9,202 @@ import { Room, Tenant } from '../../core/models';
   standalone: true,
   imports: [CommonModule, FormsModule, CurrencyPipe, DatePipe],
   styles: [`
-    .page { display: grid; gap: 24px; }
+    .page { display: grid; gap: 20px; }
 
-    /* HERO */
     .hero {
       display: flex; justify-content: space-between; align-items: center;
-      gap: 20px; padding: 28px 32px; border-radius: 24px;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: #fff; box-shadow: 0 16px 40px rgba(15,23,42,0.15);
+      gap: 20px; padding: 26px 30px; border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, #0b1620, #16324a);
+      color: #fff; box-shadow: 0 16px 40px rgba(11,22,32,0.18);
+      position: relative; overflow: hidden;
     }
-    .hero p { color: #2dd4bf; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
-    .hero h1 { margin: 0; font-size: clamp(26px,4vw,38px); letter-spacing: -1.5px; color: #fff; }
+    .hero::after {
+      content: ''; position: absolute; top: -40%; right: -10%; width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(16,185,129,0.28), transparent 70%); pointer-events: none;
+    }
+    .hero-txt { position: relative; z-index: 1; }
+    .hero p { color: var(--primary-bright); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+    .hero h1 { margin: 0; font-size: clamp(24px,4vw,36px); letter-spacing: -1.4px; color: #fff; }
+    .hero-sub { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 6px; }
+    .add-btn {
+      position: relative; z-index: 1; min-height: 48px; padding: 0 22px; border-radius: 14px; border: none;
+      background: var(--primary-grad); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 10px 24px rgba(16,185,129,0.35); white-space: nowrap; flex-shrink: 0;
+    }
+    .add-btn:hover { transform: translateY(-1px); }
 
-    /* STATS */
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 14px; }
-    .scard { padding: 18px 20px; border-radius: 18px; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15,23,42,0.04); }
-    .scard small { display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-    .scard strong { font-size: 28px; letter-spacing: -1px; color: #0f172a; }
-    .scard.green strong { color: #0d9488; }
-    .scard.red strong { color: #ef4444; }
+    .scard {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 18px; border-radius: var(--radius); background: var(--panel);
+      border: 1px solid var(--panel-border); box-shadow: var(--shadow-xs);
+    }
+    .scard-ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+    .scard.blue .scard-ic { background: #eff6ff; }
+    .scard.slate .scard-ic { background: #f1f5f9; }
+    .scard.green .scard-ic { background: var(--primary-soft); }
+    .scard.red .scard-ic { background: #fef2f2; }
+    .scard.amber .scard-ic { background: #fffbeb; }
+    .scard small { display: block; color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+    .scard strong { font-size: 24px; letter-spacing: -1px; color: var(--ink); line-height: 1; }
+    .scard.green strong { color: var(--primary-dark); }
+    .scard.red strong { color: var(--danger); }
+    .scard .money { font-size: 18px; }
 
-    /* TOOLBAR */
     .toolbar {
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-      padding: 16px 20px; border-radius: 18px; background: #fff;
-      border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15,23,42,0.04);
+      padding: 14px 16px; border-radius: var(--radius); background: var(--panel);
+      border: 1px solid var(--panel-border); box-shadow: var(--shadow-xs);
     }
     .search-box {
       flex: 1; min-width: 200px; display: flex; align-items: center; gap: 8px;
-      padding: 9px 14px; border-radius: 12px; border: 1.5px solid #e2e8f0; background: #f8fafc;
+      padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--line-strong); background: #f7faf9;
+      transition: var(--transition);
     }
-    .search-box input { border: none; background: transparent; font-size: 14px; width: 100%; outline: none; color: #0f172a; }
+    .search-box:focus-within { border-color: var(--primary); box-shadow: var(--ring); background: #fff; }
+    .search-box input { border: none; background: transparent; font-size: 16px; width: 100%; outline: none; color: var(--ink); }
+    .seg {
+      display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 12px; gap: 2px;
+    }
     .filter-btn {
-      padding: 9px 16px; border-radius: 12px; border: 1.5px solid #e2e8f0;
-      background: #fff; font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer;
+      min-height: 38px; padding: 0 16px; border-radius: 9px; border: none;
+      background: transparent; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer;
+      transition: var(--transition);
     }
-    .filter-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+    .filter-btn.active { background: #fff; color: var(--primary-dark); box-shadow: var(--shadow-xs); }
 
-    /* TABLE */
-    .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid #e2e8f0; }
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--line); }
     table { width: 100%; border-collapse: collapse; }
-    thead tr { background: #f8fafc; }
-    th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
-    td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
+    thead tr { background: #f7faf9; }
+    th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); border-bottom: 1px solid var(--line); white-space: nowrap; }
+    td { padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: middle; }
     tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover { background: #f8fafc; }
+    tbody tr:hover { background: #f6faf8; }
 
-    /* AVATAR */
     .tenant-cell { display: flex; align-items: center; gap: 12px; }
     .avatar {
-      width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
-      background: linear-gradient(135deg, #0d9488, #2dd4bf);
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+      background: var(--primary-grad);
       display: grid; place-items: center; font-size: 16px; font-weight: 800; color: #fff;
+      box-shadow: 0 4px 10px rgba(16,185,129,0.3);
     }
-    .tenant-cell strong { display: block; font-size: 14px; color: #0f172a; }
-    .tenant-cell small { color: #64748b; font-size: 12px; }
+    .tenant-cell strong { display: block; font-size: 14px; color: var(--ink); }
+    .tenant-cell small { color: var(--muted); font-size: 12px; }
 
-    /* BADGE */
-    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 800; }
     .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
-    .badge.active { background: #dcfce7; color: #15803d; }
-    .badge.active::before { background: #16a34a; }
+    .badge.active { background: var(--primary-100); color: var(--primary-darker); }
+    .badge.active::before { background: var(--primary); }
     .badge.inactive { background: #fee2e2; color: #b91c1c; }
     .badge.inactive::before { background: #ef4444; }
 
-    /* ROW ACTIONS */
     .row-actions { display: flex; gap: 6px; }
-    .btn-sm { padding: 6px 12px; border-radius: 9px; border: 1px solid #e2e8f0; background: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }
-    .btn-sm:hover { background: #f1f5f9; }
-    .btn-sm.danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-    .btn-sm.danger:hover { background: #fecaca; }
-    .view-link { color: #0d9488; font-weight: 700; font-size: 13px; text-decoration: none; }
+    .btn-sm { min-height: 36px; padding: 6px 13px; border-radius: 9px; border: 1px solid var(--line-strong); background: #fff; font-size: 12px; font-weight: 700; cursor: pointer; transition: var(--transition); }
+    .btn-sm:hover { background: #f8fafc; }
+    .btn-sm.danger { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .btn-sm.danger:hover { background: #fee2e2; }
+    .view-link { color: var(--primary-dark); font-weight: 700; font-size: 13px; text-decoration: none; }
     .view-link:hover { text-decoration: underline; }
 
-    /* PANEL HEADER */
-    .panel-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
-    .panel-hdr h2 { margin: 0; font-size: 20px; }
-    .count-chip { padding: 5px 14px; border-radius: 999px; background: #f0fdfa; color: #0f766e; font-size: 13px; font-weight: 800; }
-
-    /* EMPTY */
-    .empty { padding: 48px; text-align: center; color: #94a3b8; border: 2px dashed #e2e8f0; border-radius: 16px; }
-
-    /* DETAIL MODAL */
-    .backdrop { position: fixed; inset: 0; background: rgba(2,6,23,0.65); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .detail-modal { width: 100%; max-width: 560px; background: #fff; border-radius: 24px; padding: 30px; box-shadow: 0 30px 80px rgba(2,6,23,0.3); }
-    .detail-modal-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
-    .detail-modal-hdr h3 { margin: 0; font-size: 22px; }
-    .detail-modal-hdr small { color: #64748b; font-size: 13px; }
-    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
-    .ditem { padding: 12px 14px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
-    .ditem small { display: block; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
-    .ditem strong { font-size: 14px; color: #0f172a; line-height: 1.4; }
-    .detail-actions { display: flex; gap: 10px; }
-    .detail-actions button { flex: 1; padding: 11px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
-    .btn-edit { background: #0f172a; color: #fff; }
-    .btn-close { background: #f1f5f9; color: #0f172a; }
-
-    /* ADD/EDIT MODAL */
-    .form-modal { width: 100%; max-width: 620px; background: #fff; border-radius: 24px; padding: 30px; box-shadow: 0 30px 80px rgba(2,6,23,0.3); max-height: 90vh; overflow-y: auto; }
-    .form-modal h2 { margin: 0 0 22px; font-size: 20px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-    .form-grid label, .form-modal label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; color: #475569; }
-    .form-grid input, .form-grid select,
-    .form-modal input[type=date], .form-modal input[type=file],
-    .form-modal textarea, .form-modal select {
-      border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 14px; width: 100%; background: #fff;
+    .tcards { display: none; flex-direction: column; gap: 12px; }
+    .tcard {
+      border: 1px solid var(--panel-border); border-radius: var(--radius); padding: 14px;
+      background: var(--panel); box-shadow: var(--shadow-xs); cursor: pointer; transition: var(--transition);
+      -webkit-tap-highlight-color: transparent;
     }
-    .form-grid input:focus, .form-grid select:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
-    .form-modal textarea { min-height: 80px; resize: vertical; }
-    .section-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin: 16px 0 10px; }
-    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-    .modal-actions button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
-    .btn-save { background: linear-gradient(135deg,#14b8a6,#0d9488); color: #fff; }
-    .btn-cancel { background: #f1f5f9; color: #0f172a; }
+    .tcard-top { display: flex; align-items: center; gap: 12px; }
+    .tcard-id { flex: 1; min-width: 0; }
+    .tcard-id strong { display: block; font-size: 16px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tcard-id small { color: var(--muted); font-size: 12px; }
+    .tcard-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+    .tcard-meta div { display: flex; flex-direction: column; gap: 2px; }
+    .tcard-meta small { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+    .tcard-meta span { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .tcard-actions { display: flex; gap: 8px; align-items: center; }
+    .tcard-actions .btn-sm { flex: 1; min-height: 42px; }
+    .tcard-actions .view-link { margin-left: auto; }
 
-    /* PAGINATION */
-    .pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; }
-    .pagination button, .pagination span { padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
-    .pagination button:hover { background: #f1f5f9; }
-    .pagination button.active { background: #0f172a; color: #fff; border-color: #0f172a; }
-    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .panel-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+    .panel-hdr h2 { margin: 0; font-size: 19px; }
+    .count-chip { padding: 5px 14px; border-radius: 999px; background: var(--primary-soft); color: var(--primary-darker); font-size: 13px; font-weight: 800; }
+
+    .empty { padding: 48px 24px; text-align: center; color: var(--muted); border: 1.5px dashed var(--line-strong); border-radius: var(--radius-lg); background: #fbfcfc; }
+
+    /* MODAL (bottom-sheet on mobile) */
+    .backdrop {
+      position: fixed; inset: 0; background: rgba(11,22,32,0.5); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+      animation: bkFade 0.2s ease-out;
+    }
+    @keyframes bkFade { from { opacity: 0; } to { opacity: 1; } }
+    .sheet {
+      width: 100%; background: #fff; border-radius: var(--radius-xl);
+      box-shadow: 0 30px 80px rgba(11,22,32,0.32);
+      max-height: 90vh; display: flex; flex-direction: column;
+      animation: sheetRise 0.24s cubic-bezier(0.4,0,0.2,1);
+    }
+    @keyframes sheetRise { from { opacity: 0; transform: translateY(14px) scale(0.99); } to { opacity: 1; transform: none; } }
+    .detail-modal { max-width: 580px; }
+    .form-modal { max-width: 640px; }
+    .creds-modal { max-width: 420px; }
+    .sheet-hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 22px 24px 16px; border-bottom: 1px solid var(--line); }
+    .sheet-hd h2, .sheet-hd h3 { margin: 0; font-size: 20px; }
+    .sheet-hd small { color: var(--muted); font-size: 13px; display: block; margin-top: 4px; }
+    .sheet-x { min-height: 0; width: 34px; height: 34px; border-radius: 10px; background: #f1f5f9; border: none; font-size: 16px; cursor: pointer; color: var(--muted); flex-shrink: 0; }
+    .sheet-x:hover { background: #e2e8f0; }
+    .sheet-body { padding: 20px 24px; overflow-y: auto; }
+    .sheet-ft { display: flex; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--line); background: #fff; }
+    .sheet-ft button { flex: 1; min-height: 48px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .ditem { padding: 12px 14px; border-radius: 12px; background: #f7faf9; border: 1px solid var(--line); }
+    .ditem small { display: block; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+    .ditem strong { font-size: 14px; color: var(--ink); line-height: 1.4; word-break: break-word; }
+    .btn-edit { background: var(--ink); color: #fff; }
+    .btn-close, .btn-cancel { background: #f1f5f9; color: var(--ink); }
+    .btn-save { background: var(--primary-grad); color: #fff; box-shadow: 0 8px 18px rgba(16,185,129,0.28); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid label, .sheet-body > label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+    .sheet-body > label { margin-top: 12px; }
+    .form-grid input, .form-grid select,
+    .sheet-body input[type=date], .sheet-body input[type=file],
+    .sheet-body textarea, .sheet-body select {
+      border: 1.5px solid var(--line-strong); border-radius: 11px; padding: 11px 13px; font-size: 16px; width: 100%; background: #fff;
+    }
+    .form-grid input:focus, .form-grid select:focus,
+    .sheet-body textarea:focus, .sheet-body select:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring); }
+    .sheet-body textarea { min-height: 74px; resize: vertical; }
+    .section-label { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin: 20px 0 10px; }
+    .section-label:first-child { margin-top: 0; }
+
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 20px; flex-wrap: wrap; }
+    .pagination button, .pagination span { min-height: 40px; min-width: 40px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: var(--transition); }
+    .pagination
+    .pagination button.active { background: var(--primary-grad); color: #fff; border-color: transparent; }
+    .pagination button:disabled { opacity: 0.45; cursor: not-allowed; }
     .pagination span { border: none; background: transparent; }
 
     @media (max-width: 768px) {
-      .hero { flex-direction: column; align-items: flex-start; padding: 22px; }
+      .hero { flex-direction: column; align-items: stretch; padding: 22px; }
+      .add-btn { width: 100%; }
+      .search-box { min-width: 0; width: 100%; }
+      .seg { width: 100%; }
+      .seg .filter-btn { flex: 1; }
+      .table-wrap { display: none; }
+      .tcards { display: flex; }
+      /* bottom sheet */
+      .backdrop { align-items: flex-end; padding: 0; }
+      .sheet { max-width: 100% !important; border-radius: 22px 22px 0 0; max-height: 92vh; animation: sheetUp 0.28s cubic-bezier(0.4,0,0.2,1); }
+      @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+      .sheet-body { padding: 18px; }
+      .sheet-hd { padding: 18px 18px 14px; }
+      .sheet-ft { padding: 14px 18px calc(14px + env(safe-area-inset-bottom, 0px)); }
+    }
+    @media (max-width: 560px) {
+      .stats { grid-template-columns: 1fr 1fr; }
       .form-grid { grid-template-columns: 1fr; }
       .detail-grid { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 480px) {
-      th:nth-child(3), td:nth-child(3),
-      th:nth-child(6), td:nth-child(6) { display: none; }
     }
   `],
   template: `
@@ -147,20 +212,21 @@ import { Room, Tenant } from '../../core/models';
 
       <!-- HERO -->
       <div class="hero">
-        <div>
+        <div class="hero-txt">
           <p>Tenant Management</p>
           <h1>Tenants</h1>
+          <div class="hero-sub">{{ activeCount() }} active · {{ tenants.length }} total on record</div>
         </div>
-        <button class="btn-save" style="padding:12px 24px;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;" (click)="openAdd()">+ Add Tenant</button>
+        <button class="add-btn" (click)="openAdd()">+ Add Tenant</button>
       </div>
 
       <!-- STATS -->
       <div class="stats">
-        <div class="scard"><small>Total Tenants</small><strong>{{ tenants.length }}</strong></div>
-        <div class="scard green"><small>Active</small><strong>{{ activeCount() }}</strong></div>
-        <div class="scard red"><small>Inactive</small><strong>{{ tenants.length - activeCount() }}</strong></div>
-        <div class="scard"><small>Monthly Income</small><strong style="font-size:18px;">{{ totalRent() | currency:'INR':'symbol':'1.0-0' }}</strong></div>
-        <div class="scard"><small>Total Advance</small><strong style="font-size:18px;">{{ totalAdvance() | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+        <div class="scard blue"><div class="scard-ic">👥</div><div><small>Total Tenants</small><strong>{{ tenants.length }}</strong></div></div>
+        <div class="scard green"><div class="scard-ic">✅</div><div><small>Active</small><strong>{{ activeCount() }}</strong></div></div>
+        <div class="scard red"><div class="scard-ic">💤</div><div><small>Inactive</small><strong>{{ tenants.length - activeCount() }}</strong></div></div>
+        <div class="scard amber"><div class="scard-ic">💰</div><div><small>Monthly Income</small><strong class="money">{{ totalRent() | currency:'INR':'symbol':'1.0-0' }}</strong></div></div>
+        <div class="scard slate"><div class="scard-ic">🏦</div><div><small>Total Advance</small><strong class="money">{{ totalAdvance() | currency:'INR':'symbol':'1.0-0' }}</strong></div></div>
       </div>
 
       <!-- TOOLBAR -->
@@ -169,19 +235,22 @@ import { Room, Tenant } from '../../core/models';
           <span>🔍</span>
           <input [(ngModel)]="search" (input)="currentPage = 1" placeholder="Search by name, phone, room..." />
         </div>
-        <button class="filter-btn" [class.active]="filter==='ALL'" (click)="filter='ALL'; currentPage = 1">All</button>
-        <button class="filter-btn" [class.active]="filter==='ACTIVE'" (click)="filter='ACTIVE'; currentPage = 1">Active</button>
-        <button class="filter-btn" [class.active]="filter==='INACTIVE'" (click)="filter='INACTIVE'; currentPage = 1">Inactive</button>
+        <div class="seg">
+          <button class="filter-btn" [class.active]="filter==='ALL'" (click)="filter='ALL'; currentPage = 1">All</button>
+          <button class="filter-btn" [class.active]="filter==='ACTIVE'" (click)="filter='ACTIVE'; currentPage = 1">Active</button>
+          <button class="filter-btn" [class.active]="filter==='INACTIVE'" (click)="filter='INACTIVE'; currentPage = 1">Inactive</button>
+        </div>
       </div>
 
-      <!-- TABLE -->
-      <div class="panel" style="padding:24px;">
+      <!-- DIRECTORY -->
+      <div class="panel">
         <div class="panel-hdr">
           <h2>Tenant Directory</h2>
           <span class="count-chip">Page {{ currentPage }} of {{ totalPages() }} ({{ allFiltered().length }} total)</span>
         </div>
 
         @if (filtered().length) {
+          <!-- DESKTOP TABLE -->
           <div class="table-wrap">
             <table>
               <thead>
@@ -232,14 +301,41 @@ import { Room, Tenant } from '../../core/models';
             </table>
           </div>
 
+          <!-- MOBILE CARD LIST -->
+          <div class="tcards">
+            @for (t of filtered(); track t._id) {
+              <div class="tcard" (click)="view(t)">
+                <div class="tcard-top">
+                  <div class="avatar">{{ t.name.charAt(0).toUpperCase() }}</div>
+                  <div class="tcard-id">
+                    <strong>{{ t.name }}</strong>
+                    <small>{{ roomNo(t) }} · Bed {{ t.bedNo }}</small>
+                  </div>
+                  <span class="badge" [class.active]="t.status==='ACTIVE'" [class.inactive]="t.status!=='ACTIVE'">{{ t.status }}</span>
+                </div>
+                <div class="tcard-meta">
+                  <div><small>Phone</small><span>{{ t.phone }}</span></div>
+                  <div><small>Monthly Rent</small><span>{{ t.monthlyRent | currency:'INR':'symbol':'1.0-0' }}</span></div>
+                </div>
+                <div class="tcard-actions" (click)="$event.stopPropagation()">
+                  <button class="btn-sm" (click)="edit(t)">Edit</button>
+                  <button class="btn-sm danger" (click)="remove(t)">Delete</button>
+                  @if (t.idProof?.path) {
+                    <a class="view-link" [href]="fileUrl(t.idProof?.path)" target="_blank">ID Proof</a>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
           <!-- PAGINATION -->
           @if (totalPages() > 1) {
             <div class="pagination">
-              <button (click)="previousPage()" [disabled]="currentPage === 1">← Prev</button>
+              <button (click)="previousPage()" [disabled]="currentPage === 1">←</button>
               @for (page of pageNumbers(); track page) {
                 <button [class.active]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
               }
-              <button (click)="nextPage()" [disabled]="currentPage === totalPages()">Next →</button>
+              <button (click)="nextPage()" [disabled]="currentPage === totalPages()">→</button>
             </div>
           }
         } @else {
@@ -247,7 +343,7 @@ import { Room, Tenant } from '../../core/models';
             @if (search || filter !== 'ALL') {
               No tenants match your search.
             } @else {
-              No tenants yet. Click <strong>+ Add Tenant</strong> to get started.
+              No tenants yet. Tap <strong>+ Add Tenant</strong> to get started.
             }
           </div>
         }
@@ -257,32 +353,34 @@ import { Room, Tenant } from '../../core/models';
     <!-- DETAIL POPUP -->
     @if (selectedTenant) {
       <div class="backdrop" (click)="selectedTenant = undefined">
-        <div class="detail-modal" (click)="$event.stopPropagation()">
-          <div class="detail-modal-hdr">
+        <div class="sheet detail-modal" (click)="$event.stopPropagation()">
+          <div class="sheet-hd">
             <div>
               <h3>{{ selectedTenant.name }}</h3>
               <small>{{ roomNo(selectedTenant) }} · Bed {{ selectedTenant.bedNo }} · Joined {{ selectedTenant.joiningDate | date:'dd MMM yyyy' }}</small>
             </div>
             <span class="badge" [class.active]="selectedTenant.status==='ACTIVE'" [class.inactive]="selectedTenant.status!=='ACTIVE'">{{ selectedTenant.status }}</span>
           </div>
-          <div class="detail-grid">
-            <div class="ditem"><small>Phone</small><strong>{{ selectedTenant.phone }}</strong></div>
-            <div class="ditem"><small>Email</small><strong>{{ selectedTenant.email || '—' }}</strong></div>
-            <div class="ditem"><small>Aadhaar</small><strong>{{ selectedTenant.aadhaarNo || '—' }}</strong></div>
-            <div class="ditem"><small>Monthly Rent</small><strong>{{ selectedTenant.monthlyRent | currency:'INR':'symbol':'1.0-0' }}</strong></div>
-            <div class="ditem"><small>Advance Paid</small><strong>{{ selectedTenant.advanceAmount | currency:'INR':'symbol':'1.0-0' }}</strong></div>
-            <div class="ditem"><small>Advance Balance</small><strong [style.color]="advanceBalance(selectedTenant) >= 0 ? '#0d9488' : '#ef4444'">{{ advanceBalance(selectedTenant) | currency:'INR':'symbol':'1.0-0' }}</strong></div>
-            <div class="ditem"><small>Guardian</small><strong>{{ selectedTenant.guardianName || '—' }}</strong></div>
-            <div class="ditem"><small>Guardian Phone</small><strong>{{ selectedTenant.guardianPhone || '—' }}</strong></div>
-            <div class="ditem"><small>Address</small><strong>{{ selectedTenant.address || '—' }}</strong></div>
-            @if (selectedTenant.notes) {
-              <div class="ditem" style="grid-column:1/-1;"><small>Notes</small><strong>{{ selectedTenant.notes }}</strong></div>
-            }
-            @if (selectedTenant.idProof?.path) {
-              <div class="ditem" style="grid-column:1/-1;"><small>ID Proof</small><a class="view-link" [href]="fileUrl(selectedTenant.idProof?.path)" target="_blank">View Document</a></div>
-            }
+          <div class="sheet-body">
+            <div class="detail-grid">
+              <div class="ditem"><small>Phone</small><strong>{{ selectedTenant.phone }}</strong></div>
+              <div class="ditem"><small>Email</small><strong>{{ selectedTenant.email || '—' }}</strong></div>
+              <div class="ditem"><small>Aadhaar</small><strong>{{ selectedTenant.aadhaarNo || '—' }}</strong></div>
+              <div class="ditem"><small>Monthly Rent</small><strong>{{ selectedTenant.monthlyRent | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+              <div class="ditem"><small>Advance Paid</small><strong>{{ selectedTenant.advanceAmount | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+              <div class="ditem"><small>Advance Balance</small><strong [style.color]="advanceBalance(selectedTenant) >= 0 ? '#059669' : '#ef4444'">{{ advanceBalance(selectedTenant) | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+              <div class="ditem"><small>Guardian</small><strong>{{ selectedTenant.guardianName || '—' }}</strong></div>
+              <div class="ditem"><small>Guardian Phone</small><strong>{{ selectedTenant.guardianPhone || '—' }}</strong></div>
+              <div class="ditem" style="grid-column:1/-1;"><small>Address</small><strong>{{ selectedTenant.address || '—' }}</strong></div>
+              @if (selectedTenant.notes) {
+                <div class="ditem" style="grid-column:1/-1;"><small>Notes</small><strong>{{ selectedTenant.notes }}</strong></div>
+              }
+              @if (selectedTenant.idProof?.path) {
+                <div class="ditem" style="grid-column:1/-1;"><small>ID Proof</small><a class="view-link" [href]="fileUrl(selectedTenant.idProof?.path)" target="_blank">View Document</a></div>
+              }
+            </div>
           </div>
-          <div class="detail-actions">
+          <div class="sheet-ft">
             <button class="btn-edit" (click)="edit(selectedTenant); selectedTenant=undefined">Edit Tenant</button>
             <button class="btn-close" (click)="selectedTenant=undefined">Close</button>
           </div>
@@ -293,53 +391,56 @@ import { Room, Tenant } from '../../core/models';
     <!-- ADD / EDIT MODAL -->
     @if (showModal) {
       <div class="backdrop" (click)="closeModal()">
-        <div class="form-modal" (click)="$event.stopPropagation()">
-          <h2>{{ form._id ? 'Edit Tenant' : 'Add New Tenant' }}</h2>
-
-          <p class="section-label">Personal Info</p>
-          <div class="form-grid">
-            <label>Full Name <input [(ngModel)]="form.name" name="name" placeholder="Enter name" required /></label>
-            <label>Phone <input [(ngModel)]="form.phone" name="phone" placeholder="10-digit number" required /></label>
-            <label>Email <input type="email" [(ngModel)]="form.email" name="email" placeholder="email@example.com" /></label>
-            <label>Aadhaar Number <input [(ngModel)]="form.aadhaarNo" name="aadhaarNo" placeholder="12-digit number" /></label>
-            <label>Guardian Name <input [(ngModel)]="form.guardianName" name="guardianName" /></label>
-            <label>Guardian Phone <input [(ngModel)]="form.guardianPhone" name="guardianPhone" /></label>
+        <div class="sheet form-modal" (click)="$event.stopPropagation()">
+          <div class="sheet-hd">
+            <h2>{{ form._id ? 'Edit Tenant' : 'Add New Tenant' }}</h2>
+            <button class="sheet-x" (click)="closeModal()">✕</button>
           </div>
+          <div class="sheet-body">
+            <p class="section-label">Personal Info</p>
+            <div class="form-grid">
+              <label>Full Name <input [(ngModel)]="form.name" name="name" placeholder="Enter name" required /></label>
+              <label>Phone <input [(ngModel)]="form.phone" name="phone" placeholder="10-digit number" required /></label>
+              <label>Email <input type="email" [(ngModel)]="form.email" name="email" placeholder="email@example.com" /></label>
+              <label>Aadhaar Number <input [(ngModel)]="form.aadhaarNo" name="aadhaarNo" placeholder="12-digit number" /></label>
+              <label>Guardian Name <input [(ngModel)]="form.guardianName" name="guardianName" /></label>
+              <label>Guardian Phone <input [(ngModel)]="form.guardianPhone" name="guardianPhone" /></label>
+            </div>
 
-          <p class="section-label">Room & Rent</p>
-          <div class="form-grid">
-            <label>Room
-              <select [(ngModel)]="form.roomId" name="roomId" (change)="onRoomChange()">
-                <option value="" disabled>Select room</option>
-                @for (r of rooms; track r._id) {
-                  <option [value]="r._id">{{ r.roomNo }} (Floor {{ r.floor }}) — {{ availableBedsInRoom(r) }} free</option>
-                }
-              </select>
-            </label>
-            <label>Bed Number
-              <select [(ngModel)]="form.bedNo" name="bedNo">
-                @for (b of availableBeds(); track b) {
-                  <option [value]="b">Bed {{ b }}</option>
-                }
-              </select>
-            </label>
-            <label>Joining Date <input type="date" [(ngModel)]="form.joiningDate" name="joiningDate" /></label>
-            <label>Monthly Rent <input type="number" [(ngModel)]="form.monthlyRent" name="monthlyRent" /></label>
-            <label>Advance Amount <input type="number" [(ngModel)]="form.advanceAmount" name="advanceAmount" /></label>
-            <label>Status
-              <select [(ngModel)]="form.status" name="status">
-                <option>ACTIVE</option>
-                <option>INACTIVE</option>
-              </select>
-            </label>
+            <p class="section-label">Room &amp; Rent</p>
+            <div class="form-grid">
+              <label>Room
+                <select [(ngModel)]="form.roomId" name="roomId" (change)="onRoomChange()">
+                  <option value="" disabled>Select room</option>
+                  @for (r of rooms; track r._id) {
+                    <option [value]="r._id">{{ r.roomNo }} (Floor {{ r.floor }}) — {{ availableBedsInRoom(r) }} free</option>
+                  }
+                </select>
+              </label>
+              <label>Bed Number
+                <select [(ngModel)]="form.bedNo" name="bedNo">
+                  @for (b of availableBeds(); track b) {
+                    <option [value]="b">Bed {{ b }}</option>
+                  }
+                </select>
+              </label>
+              <label>Joining Date <input type="date" [(ngModel)]="form.joiningDate" name="joiningDate" /></label>
+              <label>Monthly Rent <input type="number" [(ngModel)]="form.monthlyRent" name="monthlyRent" /></label>
+              <label>Advance Amount <input type="number" [(ngModel)]="form.advanceAmount" name="advanceAmount" /></label>
+              <label>Status
+                <select [(ngModel)]="form.status" name="status">
+                  <option>ACTIVE</option>
+                  <option>INACTIVE</option>
+                </select>
+              </label>
+            </div>
+
+            <p class="section-label">Additional</p>
+            <label>Address <textarea [(ngModel)]="form.address" name="address" rows="2"></textarea></label>
+            <label>Notes <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea></label>
+            <label>ID Proof (Photo/PDF) <input type="file" (change)="file = $any($event.target).files[0]" /></label>
           </div>
-
-          <p class="section-label">Additional</p>
-          <label style="margin-bottom:12px;">Address <textarea [(ngModel)]="form.address" name="address" rows="2"></textarea></label>
-          <label style="margin-bottom:12px;">Notes <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea></label>
-          <label style="margin-bottom:4px;">ID Proof (Photo/PDF) <input type="file" (change)="file = $any($event.target).files[0]" /></label>
-
-          <div class="modal-actions">
+          <div class="sheet-ft">
             <button class="btn-save" (click)="save()">{{ form._id ? 'Update Tenant' : 'Save Tenant' }}</button>
             <button class="btn-cancel" (click)="closeModal()">Cancel</button>
           </div>
@@ -350,19 +451,23 @@ import { Room, Tenant } from '../../core/models';
     <!-- CREDENTIALS POPUP -->
     @if (createdCreds) {
       <div class="backdrop" (click)="createdCreds = undefined">
-        <div class="detail-modal" style="max-width:400px;text-align:center;" (click)="$event.stopPropagation()">
-          <div style="font-size:42px;margin-bottom:10px;">🔐</div>
-          <h3 style="margin:0 0 6px;font-size:20px;">Tenant Account Created</h3>
-          <p style="color:#64748b;font-size:13px;margin:0 0 20px;">Share these login credentials with the tenant.</p>
-          <div class="detail-grid" style="grid-template-columns:1fr;">
-            <div class="ditem"><small>Email</small><strong>{{ createdCreds.email }}</strong></div>
-            <div class="ditem" style="background:#f0fdf4;border-color:#bbf7d0;">
-              <small>Auto-generated Password</small>
-              <strong style="font-size:20px;letter-spacing:3px;color:#15803d;">{{ createdCreds.password }}</strong>
+        <div class="sheet creds-modal" style="text-align:center;" (click)="$event.stopPropagation()">
+          <div class="sheet-body">
+            <div style="font-size:42px;margin-bottom:10px;">🔐</div>
+            <h3 style="margin:0 0 6px;font-size:20px;">Tenant Account Created</h3>
+            <p style="color:#64748b;font-size:13px;margin:0 0 20px;">Share these login credentials with the tenant.</p>
+            <div class="detail-grid" style="grid-template-columns:1fr;">
+              <div class="ditem"><small>Email</small><strong>{{ createdCreds.email }}</strong></div>
+              <div class="ditem" style="background:var(--primary-soft);border-color:var(--primary-200);">
+                <small>Auto-generated Password</small>
+                <strong style="font-size:20px;letter-spacing:3px;color:var(--primary-dark);">{{ createdCreds.password }}</strong>
+              </div>
             </div>
+            <p style="font-size:12px;color:#94a3b8;margin:14px 0 0;">⚠️ This password won't be shown again.</p>
           </div>
-          <p style="font-size:12px;color:#94a3b8;margin:12px 0 16px;">⚠️ This password won't be shown again.</p>
-          <button class="btn-save" style="width:100%;padding:12px;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;" (click)="createdCreds = undefined">Done</button>
+          <div class="sheet-ft">
+            <button class="btn-save" (click)="createdCreds = undefined">Done</button>
+          </div>
         </div>
       </div>
     }

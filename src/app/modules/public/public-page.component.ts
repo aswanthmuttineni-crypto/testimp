@@ -15,21 +15,24 @@ const CAT_ICONS: Record<string,string> = { Electricity:'⚡', Water:'💧', Main
     * { box-sizing: border-box; }
     .page {
       min-height: 100vh; padding: 24px;
-      background: radial-gradient(circle at top left, rgba(56,189,248,0.12), transparent 35%),
-                  radial-gradient(circle at bottom right, rgba(34,211,238,0.10), transparent 30%),
-                  linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      background: radial-gradient(circle at top left, rgba(16,185,129,0.12), transparent 38%),
+                  radial-gradient(circle at bottom right, rgba(52,211,153,0.10), transparent 32%),
+                  linear-gradient(180deg, #f6f8f7 0%, #e6edea 100%);
     }
 
     /* HERO */
     .hero {
       display: flex; justify-content: space-between; align-items: flex-start;
-      gap: 20px; padding: 28px 32px; border-radius: 28px; margin-bottom: 24px;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: #fff; box-shadow: 0 20px 50px rgba(15,23,42,0.18);
+      gap: 20px; padding: 28px 32px; border-radius: var(--radius-xl); margin-bottom: 22px;
+      background: linear-gradient(135deg, #0b1620, #16324a);
+      color: #fff; box-shadow: 0 20px 50px rgba(11,22,32,0.2);
+      position: relative; overflow: hidden;
     }
+    .hero::after { content: ''; position: absolute; top: -40%; right: -4%; width: 360px; height: 360px; background: radial-gradient(circle, rgba(16,185,129,0.26), transparent 70%); pointer-events: none; }
+    .hero > div { position: relative; z-index: 1; }
     .hero-badge { display: inline-flex; padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 11px; font-weight: 800; letter-spacing: 1px; margin-bottom: 14px; }
-    .hero h1 { margin: 0 0 10px; font-size: clamp(28px,4vw,46px); letter-spacing: -1.2px; line-height: 1.05; }
-    .hero-addr { color: rgba(255,255,255,0.80); font-size: 15px; line-height: 1.75; margin-bottom: 18px; max-width: 520px; }
+    .hero h1 { margin: 0 0 10px; font-size: clamp(28px,4vw,46px); letter-spacing: -1.2px; line-height: 1.05; color: #fff; }
+    .hero-addr { color: rgba(255,255,255,0.80); font-size: 16px; line-height: 1.75; margin-bottom: 18px; max-width: 520px; }
     .hero-meta { display: flex; flex-wrap: wrap; gap: 12px; }
     .meta-pill { padding: 12px 16px; border-radius: 16px; background: rgba(255,255,255,0.08); min-width: 120px; }
     .meta-pill small { display: block; color: rgba(255,255,255,0.65); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
@@ -52,7 +55,7 @@ const CAT_ICONS: Record<string,string> = { Electricity:'⚡', Water:'💧', Main
     .card { padding: 24px; border-radius: 24px; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 8px 24px rgba(15,23,42,0.06); }
     .card-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
     .card-hdr h2 { margin: 0; font-size: 18px; }
-    .eyebrow { color: #0d9488; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; }
+    .eyebrow { color: #10b981; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; }
     .card-icon { width: 44px; height: 44px; border-radius: 14px; background: #ecfdf5; display: grid; place-items: center; font-size: 20px; }
 
     /* TODAY HIGHLIGHT */
@@ -65,10 +68,10 @@ const CAT_ICONS: Record<string,string> = { Electricity:'⚡', Water:'💧', Main
       background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 10px;
       transition: transform 0.15s, border-color 0.15s, background 0.15s;
     }
-    .menu-row:hover { transform: translateY(-1px); border-color: #c7d2fe; background: #eef2ff; }
-    .menu-row.today { background: linear-gradient(135deg,#ecfdf5,#eff6ff); border-color: #a7f3d0; }
+    .menu-row:hover { transform: translateY(-1px); border-color: var(--primary-200); background: var(--primary-soft); }
+    .menu-row.today { background: linear-gradient(135deg,#ecfdf5,#d1fae5); border-color: var(--primary-200); }
     .day-name { display: flex; align-items: center; font-weight: 800; font-size: 13px; color: #0f172a; }
-    .menu-row.today .day-name { color: #0f766e; }
+    .menu-row.today .day-name { color: #047857; }
     .meal { display: grid; gap: 4px; }
     .meal small { color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
     .meal span { font-size: 14px; color: #111827; font-weight: 600; }
@@ -78,26 +81,26 @@ const CAT_ICONS: Record<string,string> = { Electricity:'⚡', Water:'💧', Main
     .bill-row:hover { transform: translateY(-1px); box-shadow: 0 14px 36px rgba(15,23,42,0.08); }
     .bill-left { display: flex; align-items: center; gap: 14px; }
     .bill-ico { width: 46px; height: 46px; border-radius: 14px; background: #ecfdf5; display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
-    .bill-left strong { display: block; font-size: 15px; color: #0f172a; margin-bottom: 3px; }
+    .bill-left strong { display: block; font-size: 16px; color: #0f172a; margin-bottom: 3px; }
     .bill-left small { color: #64748b; font-size: 12px; }
     .bill-right { text-align: right; }
-    .bill-amt { font-size: 18px; font-weight: 800; color: #0f766e; }
-    .bill-link { color: #0d9488; font-size: 12px; font-weight: 700; text-decoration: none; display: block; margin-top: 6px; }
+    .bill-amt { font-size: 18px; font-weight: 800; color: #047857; }
+    .bill-link { color: #10b981; font-size: 12px; font-weight: 700; text-decoration: none; display: block; margin-top: 6px; }
     .bill-link:hover { text-decoration: underline; }
 
     /* QR CARD */
     .qr-display { display: grid; place-items: center; padding: 22px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 22px; margin-bottom: 14px; }
     .qr-img { width: 180px; height: 180px; border-radius: 18px; }
     .qr-url { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 12px; text-align: center; word-break: break-all; font-size: 13px; color: #0f172a; }
-    .qr-url small { color: #0d9488; }
+    .qr-url small { color: #10b981; }
     .qr-btns { display: flex; gap: 10px; }
-    .qr-btn { flex: 1; padding: 12px 14px; border-radius: 14px; border: 1px solid #e2e8f0; background: #fff; color: #0d9488; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.15s, transform 0.15s; }
-    .qr-btn:hover { background: #f0fdfa; transform: translateY(-1px); }
+    .qr-btn { flex: 1; padding: 12px 14px; border-radius: 14px; border: 1px solid #e2e8f0; background: #fff; color: #10b981; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+    .qr-btn:hover { background: #ecfdf5; transform: translateY(-1px); }
 
     /* STATS */
     .stats-row { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
     .stat-box { padding: 20px; border-radius: 18px; background: #fff; border: 1px solid #e2e8f0; text-align: center; }
-    .stat-box strong { display: block; font-size: 30px; color: #0d9488; letter-spacing: -1px; margin-bottom: 6px; }
+    .stat-box strong { display: block; font-size: 30px; color: #10b981; letter-spacing: -1px; margin-bottom: 6px; }
     .stat-box small { color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 
     /* EMPTY */
@@ -248,7 +251,7 @@ const CAT_ICONS: Record<string,string> = { Electricity:'⚡', Water:'💧', Main
         <aside class="sidebar">
 
           <!-- QR CODE -->
-          <div class="card">
+          <div class="card" id="qr">
             <p class="eyebrow">Scan to Visit</p>
             <h2 style="margin:6px 0 16px;font-size:17px;">Share This Page</h2>
             @if (qrCodeUrl) {

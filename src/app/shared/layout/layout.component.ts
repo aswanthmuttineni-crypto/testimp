@@ -89,7 +89,7 @@ import { CommonModule } from '@angular/common';
         width: 42px;
         height: 42px;
         border-radius: 12px;
-        background: linear-gradient(135deg, #14b8a6, #0d9488);
+        background: linear-gradient(135deg, #34d399, #10b981);
         display: grid;
         place-items: center;
         font-size: 18px;
@@ -130,9 +130,9 @@ import { CommonModule } from '@angular/common';
         color: #e2e8f0;
       }
       .nav-link.active {
-        background: rgba(20, 184, 166, 0.15);
-        color: #2dd4bf;
-        border-color: rgba(45, 212, 191, 0.1);
+        background: rgba(16,185,129, 0.15);
+        color: #34d399;
+        border-color: rgba(52,211,153, 0.1);
       }
       .nav-icon {
         width: 30px;
@@ -145,7 +145,7 @@ import { CommonModule } from '@angular/common';
         flex-shrink: 0;
       }
       .nav-link.active .nav-icon {
-        background: rgba(45, 212, 191, 0.15);
+        background: rgba(52,211,153, 0.15);
       }
       .nav-text strong {
         display: block;
@@ -157,7 +157,7 @@ import { CommonModule } from '@angular/common';
         color: #475569;
       }
       .nav-link.active .nav-text small {
-        color: #99f6e4;
+        color: #a7f3d0;
       }
 
       /* LOGOUT */
@@ -377,7 +377,7 @@ import { CommonModule } from '@angular/common';
           width: 32px;
           height: 32px;
           border-radius: 9px;
-          background: linear-gradient(135deg, #14b8a6, #0d9488);
+          background: linear-gradient(135deg, #34d399, #10b981);
           display: grid;
           place-items: center;
           font-size: 14px;
@@ -438,7 +438,7 @@ import { CommonModule } from '@angular/common';
           font-size: 9px;
         }
         .bottom-nav a.active {
-          color: #2dd4bf;
+          color: #34d399;
         }
       }
     `,

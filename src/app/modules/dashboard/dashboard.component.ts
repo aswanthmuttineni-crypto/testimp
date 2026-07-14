@@ -23,6 +23,7 @@ import {
 } from 'chart.js';
 import { ApiService } from '../../core/services/api.service';
 import { Summary } from '../../core/models';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
 
 type TrendRow = { month: string; income: number; expense: number; date: Date };
 
@@ -45,7 +46,7 @@ Chart.register(
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, FormsModule, NgChartsModule],
+  imports: [CommonModule, CurrencyPipe, DatePipe, FormsModule, NgChartsModule, PaginationComponent],
   styles: [
     `
       .page {
@@ -57,14 +58,28 @@ Chart.register(
         justify-content: space-between;
         align-items: center;
         gap: 20px;
-        padding: 28px 32px;
-        border-radius: 24px;
-        background: linear-gradient(135deg, #0f172a, #1e293b);
+        padding: 26px 30px;
+        border-radius: var(--radius-xl);
+        background: linear-gradient(135deg, #0b1620, #16324a);
         color: #fff;
-        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
+        box-shadow: 0 16px 40px rgba(11, 22, 32, 0.18);
+        position: relative;
+        overflow: hidden;
       }
+      .hero::after {
+        content: '';
+        position: absolute;
+        top: -40%;
+        right: -6%;
+        width: 340px;
+        height: 340px;
+        background: radial-gradient(circle, rgba(16,185,129,0.26), transparent 70%);
+        pointer-events: none;
+      }
+      .hero-left { position: relative; z-index: 1; }
+      .send-actions { position: relative; z-index: 1; }
       .hero-left p {
-        color: #2dd4bf;
+        color: #34d399;
         font-size: 11px;
         font-weight: 800;
         text-transform: uppercase;
@@ -92,7 +107,7 @@ Chart.register(
         padding: 12px 24px;
         border-radius: 14px;
         border: none;
-        background: linear-gradient(135deg, #14b8a6, #0d9488);
+        background: linear-gradient(135deg, #34d399, #10b981);
         color: #fff;
         font-size: 14px;
         font-weight: 700;
@@ -116,9 +131,9 @@ Chart.register(
         font-weight: 600;
       }
       .notice.info {
-        background: #f0fdfa;
-        border: 1px solid #99f6e4;
-        color: #0f766e;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #047857;
       }
       .notice.success {
         background: #dcfce7;
@@ -136,36 +151,52 @@ Chart.register(
         gap: 14px;
       }
       .scard {
-        padding: 18px 20px;
-        border-radius: 18px;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-        transition: transform 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        border-radius: var(--radius);
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        box-shadow: var(--shadow-xs);
+        transition: var(--transition);
       }
       .scard:hover {
         transform: translateY(-2px);
+        box-shadow: var(--shadow);
       }
       .scard-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
         font-size: 22px;
-        margin-bottom: 10px;
+        flex-shrink: 0;
+        background: #f1f5f9;
+        margin: 0;
       }
+      .scard.green .scard-icon { background: var(--primary-soft); }
+      .scard.red .scard-icon { background: #fef2f2; }
+      .scard.yellow .scard-icon { background: #fffbeb; }
+      .scard.blue .scard-icon { background: #eff6ff; }
       .scard small {
         display: block;
-        color: #64748b;
+        color: var(--muted);
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.8px;
-        margin-bottom: 6px;
+        letter-spacing: 0.6px;
+        margin-bottom: 4px;
       }
       .scard strong {
         font-size: 22px;
-        letter-spacing: -0.5px;
-        color: #0f172a;
+        letter-spacing: -0.6px;
+        color: var(--ink);
+        line-height: 1;
       }
       .scard.green strong {
-        color: #0d9488;
+        color: var(--primary-dark);
       }
       .scard.red strong {
         color: #ef4444;
@@ -192,7 +223,7 @@ Chart.register(
         font-size: 17px;
       }
       .eyebrow {
-        color: #0d9488;
+        color: #10b981;
         font-size: 10px;
         font-weight: 800;
         text-transform: uppercase;
@@ -229,7 +260,7 @@ Chart.register(
         transition: width 0.5s;
       }
       .bar-income span {
-        background: linear-gradient(90deg, #0d9488, #2dd4bf);
+        background: linear-gradient(90deg, #10b981, #34d399);
       }
       .bar-expense span {
         background: linear-gradient(90deg, #f59e0b, #fbbf24);
@@ -293,6 +324,17 @@ Chart.register(
         border-radius: 12px;
         border: 1px solid #e2e8f0;
       }
+      .dcards { display: none; flex-direction: column; gap: 12px; }
+      .dcard { border: 1px solid var(--panel-border); border-radius: var(--radius); padding: 14px; background: var(--panel); box-shadow: var(--shadow-xs); }
+      .dcard-top { display: flex; align-items: center; gap: 12px; }
+      .dcard-top .avatar { width: 42px; height: 42px; }
+      .dcard-id { flex: 1; min-width: 0; }
+      .dcard-id strong { display: block; font-size: 16px; color: var(--ink); }
+      .dcard-id small { color: var(--muted); font-size: 12px; }
+      .dcard-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+      .dcard-meta small { display: block; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+      .dcard-meta span { font-size: 14px; font-weight: 700; color: var(--ink); }
+      .dcard-wa { width: 100%; min-height: 44px; border-radius: 11px; border: 1px solid #bbf7d0; background: #dcfce7; color: #15803d; font-size: 13px; font-weight: 700; cursor: pointer; }
       .chart-panel {
         padding: 22px;
         border-radius: 22px;
@@ -367,7 +409,7 @@ Chart.register(
         border-radius: inherit;
       }
       .chart-bar.income .fill {
-        background: linear-gradient(90deg, #0d9488, #2dd4bf);
+        background: linear-gradient(90deg, #10b981, #34d399);
       }
       .chart-bar.expense .fill {
         background: linear-gradient(90deg, #f59e0b, #fbbf24);
@@ -403,7 +445,7 @@ Chart.register(
         border-radius: inherit;
       }
       .chart-bar.income .fill {
-        background: linear-gradient(90deg, #0d9488, #2dd4bf);
+        background: linear-gradient(90deg, #10b981, #34d399);
       }
       .chart-bar.expense .fill {
         background: linear-gradient(90deg, #f59e0b, #fbbf24);
@@ -461,7 +503,7 @@ Chart.register(
         width: 34px;
         height: 34px;
         border-radius: 10px;
-        background: linear-gradient(135deg, #0d9488, #2dd4bf);
+        background: linear-gradient(135deg, #10b981, #34d399);
         display: grid;
         place-items: center;
         font-size: 14px;
@@ -533,8 +575,8 @@ Chart.register(
       .month-filter input[type=number] { width: 88px; }
       .filter-badge {
         margin-left: auto; padding: 7px 16px; border-radius: 999px;
-        background: linear-gradient(135deg,#ccfbf1,#99f6e4);
-        color: #0f766e; font-size: 13px; font-weight: 800;
+        background: linear-gradient(135deg,#d1fae5,#a7f3d0);
+        color: #047857; font-size: 13px; font-weight: 800;
       }
       .btn-reset {
         padding: 7px 14px; border-radius: 10px; border: 1.5px solid #e2e8f0;
@@ -555,7 +597,7 @@ Chart.register(
       @media (max-width: 768px) {
         .hero {
           flex-direction: column;
-          align-items: flex-start;
+          align-items: stretch;
           padding: 22px;
         }
         .send-actions,
@@ -567,6 +609,13 @@ Chart.register(
         }
         .snap-grid {
           grid-template-columns: 1fr 1fr;
+        }
+        .table-wrap { display: none; }
+        .dcards { display: flex; }
+      }
+      @media (max-width: 420px) {
+        .stats {
+          grid-template-columns: 1fr;
         }
       }
     `,
@@ -630,40 +679,46 @@ Chart.register(
       @if (summary) {
         <div class="stats">
           <div class="scard green">
-            <div class="scard-icon">INR</div>
-            <small>Total Income</small
-            ><strong>{{
-              summary.totalIncome | currency: 'INR' : 'symbol' : '1.0-0'
-            }}</strong>
+            <div class="scard-icon">💰</div>
+            <div>
+              <small>Total Income</small>
+              <strong>{{ summary.totalIncome | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
           </div>
           <div class="scard red">
-            <div class="scard-icon">EXP</div>
-            <small>Total Expenses</small
-            ><strong>{{
-              summary.totalExpenses | currency: 'INR' : 'symbol' : '1.0-0'
-            }}</strong>
+            <div class="scard-icon">💸</div>
+            <div>
+              <small>Total Expenses</small>
+              <strong>{{ summary.totalExpenses | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
           </div>
           <div class="scard blue">
-            <div class="scard-icon">NET</div>
-            <small>Net Profit</small
-            ><strong>{{
-              summary.profit | currency: 'INR' : 'symbol' : '1.0-0'
-            }}</strong>
+            <div class="scard-icon">📈</div>
+            <div>
+              <small>Net Profit</small>
+              <strong>{{ summary.profit | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
           </div>
           <div class="scard">
-            <div class="scard-icon">TEN</div>
-            <small>Active Tenants</small><strong>{{ tenantCount }}</strong>
+            <div class="scard-icon">👥</div>
+            <div>
+              <small>Active Tenants</small>
+              <strong>{{ tenantCount }}</strong>
+            </div>
           </div>
           <div class="scard">
-            <div class="scard-icon">BED</div>
-            <small>Empty Beds</small><strong>{{ summary.vacantRooms }}</strong>
+            <div class="scard-icon">🛏️</div>
+            <div>
+              <small>Empty Beds</small>
+              <strong>{{ summary.vacantRooms }}</strong>
+            </div>
           </div>
           <div class="scard yellow">
-            <div class="scard-icon">DUE</div>
-            <small>Pending Rent</small
-            ><strong>{{
-              summary.pendingRent | currency: 'INR' : 'symbol' : '1.0-0'
-            }}</strong>
+            <div class="scard-icon">⏳</div>
+            <div>
+              <small>Pending Rent</small>
+              <strong>{{ summary.pendingRent | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
           </div>
         </div>
 
@@ -827,7 +882,7 @@ Chart.register(
                   </tr>
                 </thead>
                 <tbody>
-                  @for (due of summary.monthlyDues.dues; track due.tenant._id) {
+                  @for (due of pagedDues(); track due.tenant._id) {
                     <tr>
                       <td>
                         <div class="t-cell">
@@ -873,6 +928,42 @@ Chart.register(
                 </tbody>
               </table>
             </div>
+
+            <!-- MOBILE CARDS -->
+            <div class="dcards">
+              @for (due of pagedDues(); track due.tenant._id) {
+                <div class="dcard">
+                  <div class="dcard-top">
+                    <div class="avatar">{{ due.tenant.name.charAt(0).toUpperCase() }}</div>
+                    <div class="dcard-id">
+                      <strong>{{ due.tenant.name }}</strong>
+                      <small>{{ roomNo(due.tenant) }} · B{{ due.tenant.bedNo }}</small>
+                    </div>
+                    <span class="badge-pending">{{ due.status }}</span>
+                  </div>
+                  <div class="dcard-meta">
+                    <div><small>Phone</small><span>{{ due.tenant.phone }}</span></div>
+                    <div><small>Due Amount</small><span class="due-amt">{{ due.amount | currency: 'INR' : 'symbol' : '1.0-0' }}</span></div>
+                  </div>
+                  <button
+                    class="dcard-wa"
+                    [disabled]="sendingWa[due.tenant._id!]"
+                    (click)="sendSingleWhatsApp(
+                      due.tenant._id!,
+                      due.tenant.name,
+                      due.tenant.phone,
+                      due.amount,
+                      roomNo(due.tenant),
+                      due.tenant.bedNo
+                    )"
+                  >
+                    {{ sendingWa[due.tenant._id!] ? 'Sending...' : '📱 Send WhatsApp Reminder' }}
+                  </button>
+                </div>
+              }
+            </div>
+
+            <app-pagination [total]="summary.monthlyDues.dues.length" [page]="pageDues" [pageSize]="pageSizeDues" (pageChange)="pageDues = $event"></app-pagination>
           } @else {
             <div class="empty">
               No pending dues for {{ summary.monthlyDues.month }}
@@ -889,11 +980,18 @@ Chart.register(
 export class DashboardComponent implements OnInit {
   private api = inject(ApiService);
   summary?: Summary;
+  pageDues = 1;
+  pageSizeDues = 8;
+  pagedDues() {
+    const all = this.summary?.monthlyDues?.dues ?? [];
+    const start = (this.pageDues - 1) * this.pageSizeDues;
+    return all.slice(start, start + this.pageSizeDues);
+  }
   barChartType: 'bar' = 'bar';
   barChartData: ChartData<'bar'> = {
     labels: [],
     datasets: [
-      { data: [], label: 'Income', backgroundColor: '#0d9488' },
+      { data: [], label: 'Income', backgroundColor: '#10b981' },
       { data: [], label: 'Expense', backgroundColor: '#f59e0b' },
     ],
   };
@@ -913,7 +1011,7 @@ export class DashboardComponent implements OnInit {
   doughnutChartData: ChartData<'doughnut'> = {
     labels: ['Profit', 'Expenses', 'Pending Rent'],
     datasets: [
-      { data: [0, 0, 0], backgroundColor: ['#0d9488', '#f59e0b', '#6366f1'] },
+      { data: [0, 0, 0], backgroundColor: ['#10b981', '#f59e0b', '#6366f1'] },
     ],
   };
   doughnutChartOptions: ChartOptions<'doughnut'> = {
@@ -952,7 +1050,7 @@ export class DashboardComponent implements OnInit {
   pieChartType: 'pie' = 'pie';
   pieChartData: ChartData<'pie'> = {
     labels: ['Occupied Rooms', 'Empty Beds'],
-    datasets: [{ data: [0, 0], backgroundColor: ['#0d9488', '#f59e0b'] }],
+    datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#f59e0b'] }],
   };
   pieChartOptions: ChartOptions<'pie'> = {
     responsive: true,
@@ -985,7 +1083,7 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  onFilterChange() { this.summary = undefined; this.load(); }
+  onFilterChange() { this.summary = undefined; this.pageDues = 1; this.load(); }
 
   isFiltered() {
     const now = new Date();
@@ -1008,7 +1106,7 @@ export class DashboardComponent implements OnInit {
       {
         data: rows.map((r) => r.income),
         label: 'Income',
-        backgroundColor: '#0d9488',
+        backgroundColor: '#10b981',
       },
       {
         data: rows.map((r) => r.expense),

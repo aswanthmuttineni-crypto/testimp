@@ -18,7 +18,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
       justify-content: center;
       padding: 24px;
       background:
-        radial-gradient(circle at 20% 20%, rgba(13,148,136,0.12), transparent 40%),
+        radial-gradient(circle at 20% 20%, rgba(16,185,129,0.12), transparent 40%),
         radial-gradient(circle at 80% 80%, rgba(99,102,241,0.08), transparent 40%),
         #f1f5f9;
     }
@@ -44,7 +44,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
       width: 46px;
       height: 46px;
       border-radius: 14px;
-      background: linear-gradient(135deg, #14b8a6, #0d9488);
+      background: linear-gradient(135deg, #34d399, #10b981);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -99,7 +99,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
 
     .role-tab.active {
       background: #fff;
-      color: #0d9488;
+      color: #10b981;
       box-shadow: 0 2px 10px rgba(15,23,42,0.08);
     }
 
@@ -141,8 +141,8 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
     .field-label input {
       border: 1.5px solid #e2e8f0;
       border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 14px;
+      padding: 13px 14px;
+      font-size: 16px;
       font-family: inherit;
       color: #0f172a;
       background: #fff;
@@ -153,7 +153,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
     .field-label input:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(13,148,136,0.12);
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
     }
 
     .tenant-mode .field-label input:focus {
@@ -175,10 +175,10 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
     }
 
     .submit-btn.admin-btn {
-      background: linear-gradient(135deg, #14b8a6, #0d9488);
-      box-shadow: 0 8px 20px rgba(13,148,136,0.28);
+      background: linear-gradient(135deg, #34d399, #10b981);
+      box-shadow: 0 8px 20px rgba(16,185,129,0.28);
     }
-    .submit-btn.admin-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(13,148,136,0.38); }
+    .submit-btn.admin-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(16,185,129,0.38); }
 
     .submit-btn.tenant-btn {
       background: linear-gradient(135deg, #818cf8, #6366f1);
@@ -207,7 +207,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
       font-weight: 700;
       margin-bottom: 8px;
     }
-    .role-badge.admin { background: #ccfbf1; color: #0f766e; }
+    .role-badge.admin { background: #d1fae5; color: #047857; }
     .role-badge.tenant { background: #e0e7ff; color: #4338ca; }
 
     /* CREDENTIALS PANEL */
@@ -235,7 +235,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
     .cred-row strong { display: block; font-size: 14px; color: #0f172a; margin-bottom: 2px; }
     .cred-row small { font-size: 12px; color: #64748b; }
     .cred-pass {
-      font-size: 15px; font-weight: 800; letter-spacing: 2px;
+      font-size: 16px; font-weight: 800; letter-spacing: 2px;
       color: #15803d; background: #f0fdf4;
       padding: 6px 12px; border-radius: 8px; white-space: nowrap;
     }
@@ -243,7 +243,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
     .creds-done {
       margin-top: 18px; width: 100%; padding: 12px;
       border-radius: 12px; border: none;
-      background: linear-gradient(135deg,#14b8a6,#0d9488);
+      background: linear-gradient(135deg,#34d399,#10b981);
       color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
     }
     .auth-switch {
@@ -255,7 +255,7 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
     .link-btn {
       border: none;
       background: transparent;
-      color: #0d9488;
+      color: #10b981;
       font-weight: 800;
       cursor: pointer;
       padding: 0 4px;
@@ -288,20 +288,29 @@ interface TenantCred { name: string; email: string; plainPassword: string; creat
     .gate-modal p { margin: 0 0 20px; font-size: 13px; color: #64748b; text-align: center; }
     .gate-input {
       width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
-      padding: 12px 14px; font-size: 15px; font-family: inherit;
+      padding: 12px 14px; font-size: 16px; font-family: inherit;
       color: #0f172a; letter-spacing: 2px; margin-bottom: 14px;
     }
-    .gate-input:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.12); }
+    .gate-input:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
     .gate-input.err { border-color: #ef4444; }
     .gate-err { color: #b91c1c; font-size: 12px; font-weight: 700; margin-bottom: 14px; text-align: center; }
     .gate-btn {
       width: 100%; min-height: 46px; border: none; border-radius: 12px;
-      background: linear-gradient(135deg,#14b8a6,#0d9488);
+      background: linear-gradient(135deg,#34d399,#10b981);
       color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 10px;
     }
     .gate-cancel {
-      width: 100%; min-height: 40px; border: 1.5px solid #e2e8f0; border-radius: 12px;
-      background: #fff; color: #64748b; font-size: 13px; font-weight: 700; cursor: pointer;
+      width: 100%; min-height: 44px; border: 1.5px solid #e2e8f0; border-radius: 12px;
+      background: #fff; color: #64748b; font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .gate-input { font-size: 16px; }
+
+    @media (max-width: 480px) {
+      .login-page { padding: 16px; align-items: flex-start; padding-top: 40px; }
+      .login-card { padding: 26px 22px; border-radius: 22px; }
+      .brand { margin-bottom: 22px; }
+      .role-tabs { margin-bottom: 22px; }
+      .creds-modal, .gate-modal { padding: 24px 20px; }
     }
   `],
   template: `

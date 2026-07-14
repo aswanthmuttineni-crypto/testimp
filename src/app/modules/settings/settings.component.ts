@@ -11,97 +11,104 @@ const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sun
   standalone: true,
   imports: [CommonModule, FormsModule],
   styles: [`
-    .page { display: grid; gap: 24px; }
+    .page { display: grid; gap: 20px; }
 
-    /* HERO */
     .hero {
       display: flex; justify-content: space-between; align-items: center;
-      gap: 20px; padding: 28px 32px; border-radius: 24px;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: #fff; box-shadow: 0 16px 40px rgba(15,23,42,0.15);
+      gap: 20px; padding: 26px 30px; border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, #0b1620, #16324a);
+      color: #fff; box-shadow: 0 16px 40px rgba(11,22,32,0.18);
+      position: relative; overflow: hidden;
     }
-    .hero p { color: #2dd4bf; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
-    .hero h1 { margin: 0; font-size: clamp(26px,4vw,38px); letter-spacing: -1.5px; color: #fff; }
-    .hero-sub { color: rgba(255,255,255,0.6); font-size: 13px; margin: 4px 0 0; }
+    .hero::after {
+      content: ''; position: absolute; top: -40%; right: -10%; width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(16,185,129,0.28), transparent 70%); pointer-events: none;
+    }
+    .hero-txt { position: relative; z-index: 1; }
+    .hero p { color: var(--primary-bright); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+    .hero h1 { margin: 0; font-size: clamp(24px,4vw,36px); letter-spacing: -1.4px; color: #fff; }
+    .hero-sub { color: rgba(255,255,255,0.62); font-size: 13px; margin: 6px 0 0; max-width: 460px; }
+    .btn-save {
+      position: relative; z-index: 1; min-height: 48px; padding: 0 24px; border-radius: 14px; border: none;
+      background: var(--primary-grad); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 10px 24px rgba(16,185,129,0.35); white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-save:hover { transform: translateY(-1px); }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-    /* SAVE BTN */
-    .btn-save { padding: 12px 28px; border-radius: 14px; border: none; background: linear-gradient(135deg,#14b8a6,#0d9488); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-    .btn-save:hover { opacity: 0.9; }
-    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    /* TOAST */
     .toast {
       display: flex; align-items: center; gap: 10px;
-      padding: 14px 20px; border-radius: 14px;
-      background: #dcfce7; border: 1px solid #86efac; color: #15803d;
-      font-size: 14px; font-weight: 700;
+      padding: 14px 18px; border-radius: var(--radius);
+      background: var(--primary-soft); border: 1px solid var(--primary-200); color: var(--primary-darker);
+      font-size: 14px; font-weight: 700; animation: toastIn 0.3s ease-out;
     }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
-    /* LAYOUT */
-    .layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 24px; align-items: start; }
-    .main { display: grid; gap: 24px; }
-    .sidebar { display: grid; gap: 20px; position: sticky; top: 24px; }
+    .layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 20px; align-items: start; }
+    .main { display: grid; gap: 20px; }
+    .sidebar { display: grid; gap: 20px; position: sticky; top: 20px; }
 
-    /* CARD */
-    .card { padding: 26px; border-radius: 20px; }
-    .card-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+    .card { padding: 24px; }
+    .card-hdr { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
     .card-hdr h2 { margin: 0; font-size: 18px; }
-    .card-icon { width: 46px; height: 46px; border-radius: 14px; background: #f0fdfa; display: grid; place-items: center; font-size: 22px; }
-    .eyebrow { color: #0d9488; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; }
+    .card-icon { width: 46px; height: 46px; border-radius: 14px; background: var(--primary-soft); display: grid; place-items: center; font-size: 22px; flex-shrink: 0; }
+    .eyebrow { color: var(--primary-dark); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; }
 
-    /* FORM */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .form-grid label, .full-label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 0; }
+    .form-grid label, .full-label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 0; }
     .full { grid-column: 1/-1; }
-    .full-label { margin-top: 14px; }
+    .full-label { margin-top: 16px; }
     input, textarea, select {
-      border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;
-      font-size: 14px; width: 100%; background: #fff; font-family: inherit;
+      border: 1.5px solid var(--line-strong); border-radius: 11px; padding: 11px 13px;
+      font-size: 16px; width: 100%; background: #fff; font-family: inherit;
     }
-    input:focus, textarea:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
-    textarea { resize: vertical; min-height: 80px; }
+    input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring); }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
     .form-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-    .btn-primary { padding: 11px 22px; border-radius: 12px; border: none; background: #0f172a; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
-    .btn-secondary { padding: 11px 22px; border-radius: 12px; border: 1.5px solid #e2e8f0; background: #fff; color: #0f172a; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-primary { min-height: 44px; padding: 11px 22px; border-radius: 12px; border: none; background: var(--primary-grad); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px rgba(16,185,129,0.25); }
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-secondary { min-height: 44px; padding: 11px 22px; border-radius: 12px; border: 1.5px solid var(--line-strong); background: #fff; color: var(--ink); font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-secondary:hover { background: #f8fafc; }
 
     /* MENU EDITOR */
-    .menu-grid { display: grid; gap: 10px; margin-bottom: 16px; }
+    .menu-grid { display: grid; gap: 10px; margin-bottom: 4px; }
     .menu-row {
-      display: grid; grid-template-columns: 100px 1fr 1fr 1fr;
-      gap: 10px; padding: 14px; border-radius: 14px;
-      background: #f8fafc; border: 1px solid #e2e8f0; align-items: center;
+      padding: 14px 16px; border-radius: var(--radius); background: #f7faf9; border: 1px solid var(--line);
     }
-    .day-name { font-weight: 800; font-size: 13px; color: #0f172a; }
-    .menu-row label { font-size: 11px; font-weight: 700; color: #64748b; gap: 4px; }
-    .menu-row input { padding: 8px 10px; font-size: 13px; border-radius: 8px; }
+    .day-pill {
+      display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px;
+      background: var(--primary-soft); color: var(--primary-darker); font-weight: 800; font-size: 12px;
+      letter-spacing: 0.3px; margin-bottom: 12px;
+    }
+    .meals { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .meals label { display: grid; gap: 5px; font-size: 11px; font-weight: 700; color: var(--muted); }
+    .meals input { padding: 9px 11px; font-size: 14px; border-radius: 9px; }
 
     /* PREVIEW CARD */
-    .preview-card { padding: 22px; }
-    .preview-card h3 { margin: 8px 0 10px; font-size: 20px; color: #0f172a; }
-    .preview-card p { color: #64748b; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
-    .preview-divider { height: 1px; background: #e2e8f0; margin: 16px 0; }
+    .preview-card, .tips-card { padding: 22px; }
+    .preview-card h3 { margin: 8px 0 10px; font-size: 19px; color: var(--ink); }
+    .preview-card > p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+    .preview-divider { height: 1px; background: var(--line); margin: 16px 0; }
     .preview-row { margin-bottom: 14px; }
-    .preview-row small { display: block; color: #94a3b8; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
-    .preview-row strong { font-size: 13px; color: #0f172a; }
+    .preview-row small { display: block; color: var(--faint); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+    .preview-row strong { font-size: 13px; color: var(--ink); word-break: break-word; }
 
-    /* TIPS */
-    .tips-card { padding: 22px; }
-    .tips-card ul { margin: 12px 0 0; padding-left: 18px; display: grid; gap: 10px; }
-    .tips-card li { color: #475569; font-size: 13px; line-height: 1.5; }
+    .tips-card ul { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+    .tips-card li { color: var(--ink-soft); font-size: 13px; line-height: 1.5; padding-left: 24px; position: relative; }
+    .tips-card li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--primary-dark); font-weight: 900; }
 
-    /* LOADING */
-    .loading { padding: 60px; text-align: center; color: #94a3b8; }
+    .loading { padding: 60px; text-align: center; color: var(--faint); }
 
     @media (max-width: 1100px) {
       .layout { grid-template-columns: 1fr; }
       .sidebar { position: static; }
     }
     @media (max-width: 768px) {
-      .hero { flex-direction: column; align-items: flex-start; padding: 22px; }
+      .hero { flex-direction: column; align-items: stretch; padding: 22px; }
       .btn-save { width: 100%; }
       .form-grid { grid-template-columns: 1fr; }
-      .menu-row { grid-template-columns: 1fr; }
-      .day-name { margin-bottom: 4px; }
+      .meals { grid-template-columns: 1fr; }
+      .form-actions button, .form-actions a { flex: 1; justify-content: center; }
     }
   `],
   template: `
@@ -109,7 +116,7 @@ const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sun
 
       <!-- HERO -->
       <div class="hero">
-        <div>
+        <div class="hero-txt">
           <p>Hostel Administration</p>
           <h1>Settings</h1>
           <p class="hero-sub">Configure hostel info, emails, food menu and public page.</p>
@@ -161,10 +168,12 @@ const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sun
               <div class="menu-grid">
                 @for (item of settings.weeklyMenu; track item.day; let i = $index) {
                   <div class="menu-row">
-                    <div class="day-name">{{ item.day }}</div>
-                    <label>Breakfast <input [(ngModel)]="item.breakfast" [name]="'bf'+i" placeholder="e.g. Idli, Dosa" /></label>
-                    <label>Lunch <input [(ngModel)]="item.lunch" [name]="'ln'+i" placeholder="e.g. Rice, Dal" /></label>
-                    <label>Dinner <input [(ngModel)]="item.dinner" [name]="'dn'+i" placeholder="e.g. Chapati, Curry" /></label>
+                    <div class="day-pill">{{ item.day }}</div>
+                    <div class="meals">
+                      <label>🌅 Breakfast <input [(ngModel)]="item.breakfast" [name]="'bf'+i" placeholder="e.g. Idli, Dosa" /></label>
+                      <label>☀️ Lunch <input [(ngModel)]="item.lunch" [name]="'ln'+i" placeholder="e.g. Rice, Dal" /></label>
+                      <label>🌙 Dinner <input [(ngModel)]="item.dinner" [name]="'dn'+i" placeholder="e.g. Chapati, Curry" /></label>
+                    </div>
                   </div>
                 }
               </div>

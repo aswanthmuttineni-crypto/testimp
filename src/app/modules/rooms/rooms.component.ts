@@ -3,142 +3,199 @@ import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { Room, Tenant } from '../../core/models';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
 
 @Component({
   selector: 'app-rooms',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, DatePipe],
+  imports: [CommonModule, FormsModule, CurrencyPipe, DatePipe, PaginationComponent],
   styles: [`
-    .page { display: grid; gap: 24px; }
+    .page { display: grid; gap: 20px; }
 
     /* HERO */
     .hero {
       display: flex; justify-content: space-between; align-items: center;
-      gap: 20px; padding: 28px 32px; border-radius: 24px;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: #fff; box-shadow: 0 16px 40px rgba(15,23,42,0.15);
+      gap: 20px; padding: 26px 30px; border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, #0b1620, #16324a);
+      color: #fff; box-shadow: 0 16px 40px rgba(11,22,32,0.18);
+      position: relative; overflow: hidden;
     }
-    .hero p { color: #2dd4bf; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
-    .hero h1 { margin: 0; font-size: clamp(26px,4vw,38px); letter-spacing: -1.5px; color: #fff; }
+    .hero::after {
+      content: ''; position: absolute; top: -40%; right: -10%; width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(16,185,129,0.28), transparent 70%); pointer-events: none;
+    }
+    .hero-txt { position: relative; z-index: 1; }
+    .hero p { color: var(--primary-bright); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+    .hero h1 { margin: 0; font-size: clamp(24px,4vw,36px); letter-spacing: -1.4px; color: #fff; }
+    .hero-sub { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 6px; }
+    .add-btn {
+      position: relative; z-index: 1; min-height: 48px; padding: 0 22px; border-radius: 14px; border: none;
+      background: var(--primary-grad); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 10px 24px rgba(16,185,129,0.35); white-space: nowrap; flex-shrink: 0;
+    }
+    .add-btn:hover { transform: translateY(-1px); }
 
     /* STATS */
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 14px; }
-    .scard { padding: 18px 20px; border-radius: 18px; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15,23,42,0.04); }
-    .scard small { display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-    .scard strong { font-size: 28px; letter-spacing: -1px; color: #0f172a; }
-    .scard.green strong { color: #0d9488; }
-    .scard.red strong { color: #ef4444; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 14px; }
+    .scard {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 18px; border-radius: var(--radius); background: var(--panel);
+      border: 1px solid var(--panel-border); box-shadow: var(--shadow-xs);
+    }
+    .scard-ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+    .scard.blue .scard-ic { background: #eff6ff; }
+    .scard.slate .scard-ic { background: #f1f5f9; }
+    .scard.green .scard-ic { background: var(--primary-soft); }
+    .scard.red .scard-ic { background: #fef2f2; }
+    .scard small { display: block; color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+    .scard strong { font-size: 26px; letter-spacing: -1px; color: var(--ink); line-height: 1; }
+    .scard.green strong { color: var(--primary-dark); }
+    .scard.red strong { color: var(--danger); }
 
     /* ROOM GRID */
-    .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 20px; }
+    .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 18px; }
     .room-card {
-      border-radius: 20px; background: #fff; border: 1px solid #e2e8f0;
-      padding: 22px; box-shadow: 0 4px 16px rgba(15,23,42,0.05);
-      transition: transform 0.2s, box-shadow 0.2s;
+      border-radius: var(--radius-lg); background: var(--panel); border: 1px solid var(--panel-border);
+      padding: 20px; box-shadow: var(--shadow); transition: var(--transition);
+      display: flex; flex-direction: column;
     }
-    .room-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(15,23,42,0.09); }
+    .room-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow); }
 
-    .rc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-    .rc-title strong { font-size: 22px; color: #0f172a; letter-spacing: -0.5px; display: block; }
-    .rc-title small { color: #64748b; font-size: 12px; font-weight: 600; }
-    .rc-rent { padding: 6px 12px; border-radius: 10px; background: #f0fdfa; color: #0f766e; font-weight: 800; font-size: 13px; }
+    .rc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .rc-title strong { font-size: 20px; color: var(--ink); letter-spacing: -0.5px; display: block; }
+    .rc-title small { color: var(--muted); font-size: 12px; font-weight: 600; }
+    .rc-rent { padding: 7px 12px; border-radius: 10px; background: var(--primary-soft); color: var(--primary-darker); font-weight: 800; font-size: 13px; white-space: nowrap; }
 
     /* AMENITIES */
     .amenities { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-    .amenity { padding: 4px 10px; border-radius: 8px; background: #f1f5f9; color: #475569; font-size: 11px; font-weight: 700; }
+    .amenity { padding: 4px 10px; border-radius: 999px; background: #f1f5f9; color: var(--ink-soft); font-size: 11px; font-weight: 700; }
 
     /* OCCUPANCY BAR */
     .occ-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .occ-row span { font-size: 12px; color: #64748b; font-weight: 700; }
-    .occ-row strong { font-size: 13px; color: #0f172a; }
-    .occ-bar { height: 8px; border-radius: 999px; background: #e2e8f0; margin-bottom: 14px; overflow: hidden; }
-    .occ-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#0d9488,#2dd4bf); transition: width 0.4s; }
+    .occ-row span { font-size: 12px; color: var(--muted); font-weight: 700; }
+    .occ-row strong { font-size: 13px; color: var(--ink); }
+    .occ-bar { height: 8px; border-radius: 999px; background: var(--line); margin-bottom: 16px; overflow: hidden; }
+    .occ-bar span { display: block; height: 100%; border-radius: inherit; background: var(--primary-grad); transition: width 0.4s; }
+    .occ-bar span.full { background: linear-gradient(90deg,#ef4444,#f87171); }
 
     /* BED GRID */
-    .bed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px,1fr)); gap: 8px; margin-bottom: 16px; }
+    .bed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px,1fr)); gap: 8px; margin-bottom: 16px; }
     .bed {
-      min-height: 72px; border-radius: 14px; padding: 10px 8px;
+      min-height: 80px; border-radius: 14px; padding: 8px 6px;
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      gap: 4px; border: 1.5px solid #e2e8f0; cursor: pointer; transition: all 0.18s; text-align: center;
+      gap: 3px; border: 1.5px solid var(--line-strong); cursor: pointer; transition: var(--transition); text-align: center;
+      -webkit-tap-highlight-color: transparent;
     }
-    .bed:hover { transform: translateY(-2px); }
-    .bed.occupied { background: linear-gradient(135deg,#fee2e2,#fecaca); border-color: #fca5a5; }
-    .bed.empty { background: linear-gradient(135deg,#dcfce7,#bbf7d0); border-color: #86efac; }
+    .bed:active { transform: scale(0.97); }
+    .bed:hover { transform: translateY(-2px); box-shadow: var(--shadow-xs); }
+    .bed.occupied { background: #fef2f2; border-color: #fecaca; }
+    .bed.empty { background: var(--primary-soft); border-color: var(--primary-200); }
     .bed-no { font-size: 13px; font-weight: 800; }
     .bed.occupied .bed-no { color: #991b1b; }
-    .bed.empty .bed-no { color: #14532d; }
-    .bed-name { font-size: 10px; font-weight: 600; line-height: 1.3; word-break: break-word; color: #7f1d1d; }
-    .bed-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .bed.empty .bed-no { color: var(--primary-darker); }
+    .bed-name { font-size: 10px; font-weight: 700; line-height: 1.25; word-break: break-word; color: #7f1d1d; max-width: 100%; }
+    .bed-lbl { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 1px; }
     .bed.occupied .bed-lbl { color: #b91c1c; }
-    .bed.empty .bed-lbl { color: #15803d; }
+    .bed.empty .bed-lbl { color: var(--primary-dark); }
 
     /* ACTIONS */
-    .rc-actions { display: flex; gap: 8px; }
-    .rc-actions button { flex: 1; padding: 9px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; font-size: 12px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
-    .rc-actions button:hover { background: #f1f5f9; }
-    .rc-actions .del { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-    .rc-actions .del:hover { background: #fecaca; }
+    .rc-actions { display: flex; gap: 8px; margin-top: auto; }
+    .rc-actions button { flex: 1; min-height: 42px; padding: 9px; border-radius: 11px; border: 1px solid var(--line-strong); background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: var(--transition); }
+    .rc-actions button:hover { background: #f8fafc; }
+    .rc-actions .del { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .rc-actions .del:hover { background: #fee2e2; }
 
     /* PANEL HEADER */
-    .panel-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .panel-hdr h2 { margin: 0; font-size: 20px; }
+    .panel-hdr { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+    .panel-hdr h2 { margin: 0; font-size: 19px; }
+    .panel-hdr small { color: var(--muted); font-weight: 600; }
 
-    /* MODAL */
-    .backdrop { position: fixed; inset: 0; background: rgba(2,6,23,0.65); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .modal { width: 100%; max-width: 520px; background: #fff; border-radius: 24px; padding: 30px; box-shadow: 0 30px 80px rgba(2,6,23,0.3); max-height: 90vh; overflow-y: auto; }
-    .modal h2 { margin: 0 0 22px; font-size: 20px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-    .form-grid label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; color: #475569; }
-    .form-grid input[type=text], .form-grid input[type=number] {
-      border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 14px; width: 100%;
+    /* MODAL (bottom-sheet on mobile) */
+    .backdrop {
+      position: fixed; inset: 0; background: rgba(11,22,32,0.5); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+      animation: bkFade 0.2s ease-out;
     }
-    .form-grid input:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
-    .amenity-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 20px; }
-    .amenity-grid label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; }
-    .modal-actions { display: flex; gap: 10px; }
-    .modal-actions button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
-    .btn-save { background: linear-gradient(135deg,#14b8a6,#0d9488); color: #fff; }
-    .btn-cancel { background: #f1f5f9; color: #0f172a; }
+    @keyframes bkFade { from { opacity: 0; } to { opacity: 1; } }
+    .sheet {
+      width: 100%; background: #fff; border-radius: var(--radius-xl);
+      box-shadow: 0 30px 80px rgba(11,22,32,0.32);
+      max-height: 90vh; display: flex; flex-direction: column;
+      animation: sheetRise 0.24s cubic-bezier(0.4,0,0.2,1);
+    }
+    @keyframes sheetRise { from { opacity: 0; transform: translateY(14px) scale(0.99); } to { opacity: 1; transform: none; } }
+    .modal { max-width: 540px; }
+    .tform { max-width: 600px; }
+    .tenant-popup { max-width: 440px; }
+    .sheet-hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 24px 14px; border-bottom: 1px solid var(--line); }
+    .sheet-hd h2, .sheet-hd h3 { margin: 0; font-size: 19px; }
+    .sheet-x { min-height: 0; width: 34px; height: 34px; border-radius: 10px; background: #f1f5f9; border: none; font-size: 16px; cursor: pointer; color: var(--muted); flex-shrink: 0; }
+    .sheet-x:hover { background: #e2e8f0; }
+    .sheet-body { padding: 20px 24px; overflow-y: auto; }
+    .sheet-ft { display: flex; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--line); background: #fff; }
+    .sheet-ft button { flex: 1; min-height: 48px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+    .form-grid input[type=text], .form-grid input[type=number] {
+      border: 1.5px solid var(--line-strong); border-radius: 11px; padding: 11px 13px; font-size: 16px; width: 100%;
+    }
+    .form-grid input:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring); }
+    .amenity-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-top: 18px; }
+    .amenity-grid label {
+      display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--ink-soft);
+      cursor: pointer; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 11px; min-height: 44px;
+    }
+    .amenity-grid label:hover { background: #f8fafc; }
+    .amenity-grid input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--primary); flex-shrink: 0; }
+    .modal-sub { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin: 4px 0 0; }
+    .btn-save { background: var(--primary-grad); color: #fff; box-shadow: 0 8px 18px rgba(16,185,129,0.28); }
+    .btn-cancel { background: #f1f5f9; color: var(--ink); }
 
     /* TENANT POPUP */
-    .tenant-popup { width: 100%; max-width: 420px; background: #fff; border-radius: 24px; padding: 28px; box-shadow: 0 30px 80px rgba(2,6,23,0.3); }
-    .tenant-popup h3 { margin: 0 0 18px; font-size: 20px; }
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .ditem { padding: 12px 14px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
-    .ditem small { display: block; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
-    .ditem strong { font-size: 14px; color: #0f172a; }
-    .popup-close { width: 100%; margin-top: 18px; padding: 11px; border-radius: 12px; border: 1px solid #e2e8f0; background: #f1f5f9; font-size: 14px; font-weight: 700; cursor: pointer; }
-
-    /* ADD TENANT BTN ON BED */
-    .bed-add { font-size: 10px; font-weight: 800; color: #15803d; background: #dcfce7; border: none; border-radius: 6px; padding: 3px 8px; cursor: pointer; margin-top: 2px; }
-    .bed-add:hover { background: #bbf7d0; }
+    .ditem { padding: 12px 14px; border-radius: 12px; background: #f7faf9; border: 1px solid var(--line); }
+    .ditem small { display: block; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .ditem strong { font-size: 14px; color: var(--ink); word-break: break-word; }
 
     /* TENANT FORM MODAL */
-    .tform { width: 100%; max-width: 580px; background: #fff; border-radius: 24px; padding: 28px; box-shadow: 0 30px 80px rgba(2,6,23,0.3); max-height: 92vh; overflow-y: auto; }
-    .tform h2 { margin: 0 0 20px; font-size: 20px; }
-    .tform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-    .tform-grid label { display: grid; gap: 5px; font-size: 12px; font-weight: 700; color: #475569; }
-    .tform-grid input, .tform-grid select { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 14px; width: 100%; background: #fff; }
-    .tform-grid input:focus, .tform-grid select:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
+    .tform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .tform-grid label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+    .tform-grid input, .tform-grid select { border: 1.5px solid var(--line-strong); border-radius: 11px; padding: 11px 13px; font-size: 16px; width: 100%; background: #fff; }
+    .tform-grid input[type=file] { padding: 9px 12px; font-size: 13px; }
+    .tform-grid input:focus, .tform-grid select:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring); }
     .tform-grid .full { grid-column: 1/-1; }
-    .sec-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin: 14px 0 8px; }
-    .creds-box { margin-top: 16px; padding: 16px; border-radius: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; text-align: center; }
-    .creds-box p { margin: 0 0 6px; font-size: 13px; color: #166534; font-weight: 700; }
-    .creds-box strong { font-size: 22px; letter-spacing: 3px; color: #15803d; }
-    .err-msg { margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: #fee2e2; color: #b91c1c; font-size: 13px; font-weight: 700; }
+    .sec-label { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin: 20px 0 10px; }
+    .sec-label:first-child { margin-top: 0; }
+    .creds-box { margin-top: 18px; padding: 16px; border-radius: 14px; background: var(--primary-soft); border: 1px solid var(--primary-200); text-align: center; }
+    .creds-box p { margin: 0 0 8px; font-size: 13px; color: var(--primary-darker); font-weight: 700; }
+    .creds-box strong { font-size: 20px; letter-spacing: 2px; color: var(--primary-dark); }
+    .err-msg { margin-top: 14px; padding: 11px 14px; border-radius: 11px; background: #fef2f2; color: #b91c1c; font-size: 13px; font-weight: 700; border: 1px solid #fecaca; }
 
     /* EMPTY */
-    .empty { padding: 40px; text-align: center; color: #94a3b8; border: 2px dashed #e2e8f0; border-radius: 16px; }
+    .empty { padding: 44px 24px; text-align: center; color: var(--muted); border: 1.5px dashed var(--line-strong); border-radius: var(--radius-lg); background: #fbfcfc; }
 
     @media (max-width: 768px) {
-      .hero { flex-direction: column; align-items: flex-start; padding: 22px; }
-      .form-grid { grid-template-columns: 1fr; }
-      .amenity-grid { grid-template-columns: repeat(2,1fr); }
+      .hero { flex-direction: column; align-items: stretch; padding: 22px; }
+      .add-btn { width: 100%; }
+      .room-grid { grid-template-columns: 1fr; }
       .detail-grid { grid-template-columns: 1fr; }
+      /* bottom sheet */
+      .backdrop { align-items: flex-end; padding: 0; }
+      .sheet { max-width: 100% !important; border-radius: 22px 22px 0 0; max-height: 92vh; animation: sheetUp 0.28s cubic-bezier(0.4,0,0.2,1); }
+      @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+      .sheet-body { padding: 18px 18px; }
+      .sheet-hd { padding: 18px 18px 12px; }
+      .sheet-ft { padding: 14px 18px calc(14px + env(safe-area-inset-bottom, 0px)); }
     }
-    @media (max-width: 480px) {
+    @media (max-width: 560px) {
+      .form-grid, .tform-grid { grid-template-columns: 1fr; }
       .stats { grid-template-columns: 1fr 1fr; }
       .bed-grid { grid-template-columns: repeat(3,1fr); }
+      .scard strong { font-size: 22px; }
+    }
+    @media (max-width: 360px) {
+      .bed-grid { grid-template-columns: repeat(2,1fr); }
     }
   `],
   template: `
@@ -146,31 +203,32 @@ import { Room, Tenant } from '../../core/models';
 
       <!-- HERO -->
       <div class="hero">
-        <div>
+        <div class="hero-txt">
           <p>Room Management</p>
-          <h1>Rooms & Beds</h1>
+          <h1>Rooms &amp; Beds</h1>
+          <div class="hero-sub">{{ rooms.length }} rooms · {{ occupiedBeds() }}/{{ totalBeds() }} beds occupied</div>
         </div>
-        <button class="btn-save" style="padding:12px 24px;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;" (click)="openAdd()">+ Add Room</button>
+        <button class="add-btn" (click)="openAdd()">+ Add Room</button>
       </div>
 
       <!-- STATS -->
       <div class="stats">
-        <div class="scard"><small>Total Rooms</small><strong>{{ rooms.length }}</strong></div>
-        <div class="scard"><small>Total Beds</small><strong>{{ totalBeds() }}</strong></div>
-        <div class="scard green"><small>Occupied</small><strong>{{ occupiedBeds() }}</strong></div>
-        <div class="scard red"><small>Vacant</small><strong>{{ totalBeds() - occupiedBeds() }}</strong></div>
+        <div class="scard blue"><div class="scard-ic">🏨</div><div><small>Total Rooms</small><strong>{{ rooms.length }}</strong></div></div>
+        <div class="scard slate"><div class="scard-ic">🛏️</div><div><small>Total Beds</small><strong>{{ totalBeds() }}</strong></div></div>
+        <div class="scard green"><div class="scard-ic">✅</div><div><small>Occupied</small><strong>{{ occupiedBeds() }}</strong></div></div>
+        <div class="scard red"><div class="scard-ic">🔑</div><div><small>Vacant</small><strong>{{ totalBeds() - occupiedBeds() }}</strong></div></div>
       </div>
 
       <!-- ROOMS -->
-      <div class="panel" style="padding:24px;">
+      <div class="panel">
         <div class="panel-hdr">
           <h2>Room Overview</h2>
-          <small style="color:#64748b;font-weight:600;">{{ rooms.length }} rooms · {{ totalBeds() }} beds</small>
+          <small>{{ rooms.length }} rooms · {{ totalBeds() }} beds</small>
         </div>
 
         @if (rooms.length) {
           <div class="room-grid">
-            @for (room of rooms; track room._id) {
+            @for (room of paged(rooms); track room._id) {
               <div class="room-card">
                 <div class="rc-top">
                   <div class="rc-title">
@@ -200,22 +258,19 @@ import { Room, Tenant } from '../../core/models';
                   <strong>{{ occupiedBedsInRoom(room) }}/{{ room.capacity }}</strong>
                 </div>
                 <div class="occ-bar">
-                  <span [style.width.%]="(occupiedBedsInRoom(room) / room.capacity) * 100"></span>
+                  <span [class.full]="occupiedBedsInRoom(room) >= room.capacity" [style.width.%]="(occupiedBedsInRoom(room) / room.capacity) * 100"></span>
                 </div>
 
                 <!-- BED GRID -->
                 <div class="bed-grid">
                   @for (bed of bedNumbers(room); track bed) {
                     <div class="bed" [class.occupied]="isFilled(room,bed)" [class.empty]="!isFilled(room,bed)"
-                      (click)="isFilled(room,bed) ? viewTenant(tenantForBed(room,bed)) : null">
+                      (click)="isFilled(room,bed) ? viewTenant(tenantForBed(room,bed)) : openAddTenant(room, bed)">
                       <div class="bed-no">B{{ bed }}</div>
                       @if (tenantForBed(room, bed)) {
                         <div class="bed-name">{{ tenantForBed(room,bed)?.name }}</div>
                       }
-                      <div class="bed-lbl">{{ isFilled(room,bed) ? 'Taken' : 'Free' }}</div>
-                      @if (!isFilled(room, bed)) {
-                        <button class="bed-add" (click)="$event.stopPropagation(); openAddTenant(room, bed)">+ Add</button>
-                      }
+                      <div class="bed-lbl">{{ isFilled(room,bed) ? 'Taken' : '+ Add' }}</div>
                     </div>
                   }
                 </div>
@@ -227,8 +282,10 @@ import { Room, Tenant } from '../../core/models';
               </div>
             }
           </div>
+
+          <app-pagination [total]="rooms.length" [page]="page" [pageSize]="pageSize" (pageChange)="page = $event"></app-pagination>
         } @else {
-          <div class="empty">No rooms yet. Click <strong>+ Add Room</strong> to get started.</div>
+          <div class="empty">No rooms yet. Tap <strong>+ Add Room</strong> to get started.</div>
         }
       </div>
     </div>
@@ -236,19 +293,26 @@ import { Room, Tenant } from '../../core/models';
     <!-- TENANT DETAIL POPUP -->
     @if (selectedTenant) {
       <div class="backdrop" (click)="selectedTenant = undefined">
-        <div class="tenant-popup" (click)="$event.stopPropagation()">
-          <h3>{{ selectedTenant.name }}</h3>
-          <div class="detail-grid">
-            <div class="ditem"><small>Phone</small><strong>{{ selectedTenant.phone }}</strong></div>
-            <div class="ditem"><small>Email</small><strong>{{ selectedTenant.email || '-' }}</strong></div>
-            <div class="ditem"><small>Room / Bed</small><strong>{{ roomLabel(selectedTenant) }} / B{{ selectedTenant.bedNo }}</strong></div>
-            <div class="ditem"><small>Monthly Rent</small><strong>{{ selectedTenant.monthlyRent | currency:'INR':'symbol':'1.0-0' }}</strong></div>
-            <div class="ditem"><small>Aadhaar</small><strong>{{ selectedTenant.aadhaarNo || '-' }}</strong></div>
-            <div class="ditem"><small>Joining Date</small><strong>{{ selectedTenant.joiningDate | date:'dd MMM yyyy' }}</strong></div>
-            <div class="ditem"><small>Guardian</small><strong>{{ selectedTenant.guardianName || '-' }}</strong></div>
-            <div class="ditem"><small>Advance</small><strong>{{ selectedTenant.advanceAmount | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+        <div class="sheet tenant-popup" (click)="$event.stopPropagation()">
+          <div class="sheet-hd">
+            <h3>{{ selectedTenant.name }}</h3>
+            <button class="sheet-x" (click)="selectedTenant = undefined">✕</button>
           </div>
-          <button class="popup-close" (click)="selectedTenant = undefined">Close</button>
+          <div class="sheet-body">
+            <div class="detail-grid">
+              <div class="ditem"><small>Phone</small><strong>{{ selectedTenant.phone }}</strong></div>
+              <div class="ditem"><small>Email</small><strong>{{ selectedTenant.email || '-' }}</strong></div>
+              <div class="ditem"><small>Room / Bed</small><strong>{{ roomLabel(selectedTenant) }} / B{{ selectedTenant.bedNo }}</strong></div>
+              <div class="ditem"><small>Monthly Rent</small><strong>{{ selectedTenant.monthlyRent | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+              <div class="ditem"><small>Aadhaar</small><strong>{{ selectedTenant.aadhaarNo || '-' }}</strong></div>
+              <div class="ditem"><small>Joining Date</small><strong>{{ selectedTenant.joiningDate | date:'dd MMM yyyy' }}</strong></div>
+              <div class="ditem"><small>Guardian</small><strong>{{ selectedTenant.guardianName || '-' }}</strong></div>
+              <div class="ditem"><small>Advance</small><strong>{{ selectedTenant.advanceAmount | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+            </div>
+          </div>
+          <div class="sheet-ft">
+            <button class="btn-cancel" (click)="selectedTenant = undefined">Close</button>
+          </div>
         </div>
       </div>
     }
@@ -256,50 +320,56 @@ import { Room, Tenant } from '../../core/models';
     <!-- ADD TENANT MODAL -->
     @if (showTenantModal) {
       <div class="backdrop" (click)="closeTenantModal()">
-        <div class="tform" (click)="$event.stopPropagation()">
-          <h2>👤 Add Tenant — Room {{ tForm.roomNo }} · Bed {{ tForm.bedNo }}</h2>
-
-          <p class="sec-label">Personal Info</p>
-          <div class="tform-grid">
-            <label>Full Name <input [(ngModel)]="tForm.name" placeholder="Tenant name" /></label>
-            <label>Phone <input [(ngModel)]="tForm.phone" placeholder="10-digit number" /></label>
-            <label>Email <input type="email" [(ngModel)]="tForm.email" placeholder="email@example.com" /></label>
-            <label>Aadhaar <input [(ngModel)]="tForm.aadhaarNo" placeholder="12-digit" /></label>
-            <label>Guardian Name <input [(ngModel)]="tForm.guardianName" /></label>
-            <label>Guardian Phone <input [(ngModel)]="tForm.guardianPhone" /></label>
-          </div>
-
-          <p class="sec-label">Room & Rent</p>
-          <div class="tform-grid">
-            <label>Joining Date <input type="date" [(ngModel)]="tForm.joiningDate" /></label>
-            <label>Monthly Rent <input type="number" [(ngModel)]="tForm.monthlyRent" /></label>
-            <label>Advance Amount <input type="number" [(ngModel)]="tForm.advanceAmount" /></label>
-            <label>Status
-              <select [(ngModel)]="tForm.status">
-                <option>ACTIVE</option>
-                <option>INACTIVE</option>
-              </select>
-            </label>
-            <label class="full">Notes <input [(ngModel)]="tForm.notes" placeholder="Optional notes" /></label>
-          </div>
-
-          <p class="sec-label">ID Proof</p>
-          <div class="tform-grid">
-            <label class="full">Upload ID (Photo/PDF)
-              <input type="file" accept="image/*,.pdf" (change)="tFile = $any($event.target).files[0]" />
-            </label>
-          </div>
-
-          @if (tCreatedCreds) {
-            <div class="creds-box">
-              <p>🔐 Tenant login created! Share these credentials:</p>
-              <div>Email: <strong style="font-size:14px;letter-spacing:0;">{{ tCreatedCreds.email }}</strong></div>
-              <div style="margin-top:6px;">Password: <strong>{{ tCreatedCreds.password }}</strong></div>
+        <div class="sheet tform" (click)="$event.stopPropagation()">
+          <div class="sheet-hd">
+            <div>
+              <h2>Add Tenant</h2>
+              <p class="modal-sub">Room {{ tForm.roomNo }} · Bed {{ tForm.bedNo }}</p>
             </div>
-          }
-          @if (tError) { <div class="err-msg">{{ tError }}</div> }
+            <button class="sheet-x" (click)="closeTenantModal()">✕</button>
+          </div>
+          <div class="sheet-body">
+            <p class="sec-label">Personal Info</p>
+            <div class="tform-grid">
+              <label>Full Name <input [(ngModel)]="tForm.name" placeholder="Tenant name" /></label>
+              <label>Phone <input [(ngModel)]="tForm.phone" placeholder="10-digit number" /></label>
+              <label>Email <input type="email" [(ngModel)]="tForm.email" placeholder="email@example.com" /></label>
+              <label>Aadhaar <input [(ngModel)]="tForm.aadhaarNo" placeholder="12-digit" /></label>
+              <label>Guardian Name <input [(ngModel)]="tForm.guardianName" /></label>
+              <label>Guardian Phone <input [(ngModel)]="tForm.guardianPhone" /></label>
+            </div>
 
-          <div class="modal-actions" style="margin-top:18px;">
+            <p class="sec-label">Room &amp; Rent</p>
+            <div class="tform-grid">
+              <label>Joining Date <input type="date" [(ngModel)]="tForm.joiningDate" /></label>
+              <label>Monthly Rent <input type="number" [(ngModel)]="tForm.monthlyRent" /></label>
+              <label>Advance Amount <input type="number" [(ngModel)]="tForm.advanceAmount" /></label>
+              <label>Status
+                <select [(ngModel)]="tForm.status">
+                  <option>ACTIVE</option>
+                  <option>INACTIVE</option>
+                </select>
+              </label>
+              <label class="full">Notes <input [(ngModel)]="tForm.notes" placeholder="Optional notes" /></label>
+            </div>
+
+            <p class="sec-label">ID Proof</p>
+            <div class="tform-grid">
+              <label class="full">Upload ID (Photo/PDF)
+                <input type="file" accept="image/*,.pdf" (change)="tFile = $any($event.target).files[0]" />
+              </label>
+            </div>
+
+            @if (tCreatedCreds) {
+              <div class="creds-box">
+                <p>🔐 Tenant login created! Share these credentials:</p>
+                <div>Email: <strong style="font-size:14px;letter-spacing:0;">{{ tCreatedCreds.email }}</strong></div>
+                <div style="margin-top:6px;">Password: <strong>{{ tCreatedCreds.password }}</strong></div>
+              </div>
+            }
+            @if (tError) { <div class="err-msg">{{ tError }}</div> }
+          </div>
+          <div class="sheet-ft">
             @if (!tCreatedCreds) {
               <button class="btn-save" [disabled]="tSaving" (click)="saveTenant()">{{ tSaving ? 'Saving...' : 'Save Tenant' }}</button>
             }
@@ -312,26 +382,31 @@ import { Room, Tenant } from '../../core/models';
     <!-- ADD / EDIT ROOM MODAL -->
     @if (showModal) {
       <div class="backdrop" (click)="closeModal()">
-        <div class="modal" (click)="$event.stopPropagation()">
-          <h2>{{ form._id ? 'Edit Room' : 'Add New Room' }}</h2>
-          <div class="form-grid">
-            <label>Room No <input type="text" [(ngModel)]="form.roomNo" name="roomNo" placeholder="101A" /></label>
-            <label>Floor <input type="number" [(ngModel)]="form.floor" name="floor" /></label>
-            <label>Capacity (Beds) <input type="number" [(ngModel)]="form.capacity" name="capacity" /></label>
-            <label>Rent Amount <input type="number" [(ngModel)]="form.rentAmount" name="rentAmount" /></label>
+        <div class="sheet modal" (click)="$event.stopPropagation()">
+          <div class="sheet-hd">
+            <h2>{{ form._id ? 'Edit Room' : 'Add New Room' }}</h2>
+            <button class="sheet-x" (click)="closeModal()">✕</button>
           </div>
-          <p style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Amenities</p>
-          <div class="amenity-grid">
-            <label><input type="checkbox" [(ngModel)]="form.ac" name="ac" /> AC</label>
-            <label><input type="checkbox" [(ngModel)]="form.tv" name="tv" /> TV</label>
-            <label><input type="checkbox" [(ngModel)]="form.fridge" name="fridge" /> Fridge</label>
-            <label><input type="checkbox" [(ngModel)]="form.fan" name="fan" /> Fan</label>
-            <label><input type="checkbox" [(ngModel)]="form.heater" name="heater" /> Heater</label>
-            <label><input type="checkbox" [(ngModel)]="form.wifi" name="wifi" /> Wi-Fi</label>
-            <label><input type="checkbox" [(ngModel)]="form.wardrobe" name="wardrobe" /> Wardrobe</label>
-            <label><input type="checkbox" [(ngModel)]="form.attachedBath" name="attachedBath" /> Attached Bath</label>
+          <div class="sheet-body">
+            <div class="form-grid">
+              <label>Room No <input type="text" [(ngModel)]="form.roomNo" name="roomNo" placeholder="101A" /></label>
+              <label>Floor <input type="number" [(ngModel)]="form.floor" name="floor" /></label>
+              <label>Capacity (Beds) <input type="number" [(ngModel)]="form.capacity" name="capacity" /></label>
+              <label>Rent Amount <input type="number" [(ngModel)]="form.rentAmount" name="rentAmount" /></label>
+            </div>
+            <p class="sec-label">Amenities</p>
+            <div class="amenity-grid">
+              <label><input type="checkbox" [(ngModel)]="form.ac" name="ac" /> ❄️ AC</label>
+              <label><input type="checkbox" [(ngModel)]="form.tv" name="tv" /> 📺 TV</label>
+              <label><input type="checkbox" [(ngModel)]="form.fridge" name="fridge" /> 🧊 Fridge</label>
+              <label><input type="checkbox" [(ngModel)]="form.fan" name="fan" /> 🌀 Fan</label>
+              <label><input type="checkbox" [(ngModel)]="form.heater" name="heater" /> 🔥 Heater</label>
+              <label><input type="checkbox" [(ngModel)]="form.wifi" name="wifi" /> 📶 Wi-Fi</label>
+              <label><input type="checkbox" [(ngModel)]="form.wardrobe" name="wardrobe" /> 🚪 Wardrobe</label>
+              <label><input type="checkbox" [(ngModel)]="form.attachedBath" name="attachedBath" /> 🚿 Attached Bath</label>
+            </div>
           </div>
-          <div class="modal-actions">
+          <div class="sheet-ft">
             <button class="btn-save" (click)="save()">Save Room</button>
             <button class="btn-cancel" (click)="closeModal()">Cancel</button>
           </div>
@@ -343,6 +418,12 @@ import { Room, Tenant } from '../../core/models';
 export class RoomsComponent implements OnInit {
   private api = inject(ApiService);
   rooms: Room[] = [];
+  page = 1;
+  pageSize = 9;
+  paged(list: Room[]) {
+    const start = (this.page - 1) * this.pageSize;
+    return list.slice(start, start + this.pageSize);
+  }
   tenants: Tenant[] = [];
   form: Room = this.empty();
   selectedTenant?: Tenant;

@@ -11,41 +11,49 @@ const MEAL_ICONS: Record<string, string> = { breakfast: '🌅', lunch: '☀️',
   standalone: true,
   imports: [CommonModule, FormsModule],
   styles: [`
-    .page { display: grid; gap: 24px; }
-    .hero { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 28px 32px; border-radius: 24px; background: linear-gradient(135deg,#0f172a,#1e293b); color: #fff; box-shadow: 0 16px 40px rgba(15,23,42,0.15); }
-    .hero p { color: #2dd4bf; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
-    .hero h1 { margin: 0; font-size: clamp(26px,4vw,38px); letter-spacing: -1.5px; }
-    .panel { background: #fff; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15,23,42,0.04); padding: 24px; }
-    .panel-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .page { display: grid; gap: 20px; }
+    .hero { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 26px 30px; border-radius: var(--radius-xl); background: linear-gradient(135deg,#0b1620,#16324a); color: #fff; box-shadow: 0 16px 40px rgba(11,22,32,0.18); position: relative; overflow: hidden; }
+    .hero::after { content: ''; position: absolute; top: -40%; right: -6%; width: 320px; height: 320px; background: radial-gradient(circle, rgba(16,185,129,0.26), transparent 70%); pointer-events: none; }
+    .hero-txt { position: relative; z-index: 1; }
+    .hero p { color: var(--primary-bright); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+    .hero h1 { margin: 0; font-size: clamp(24px,4vw,36px); letter-spacing: -1.4px; color: #fff; }
+    .panel { background: var(--panel); border-radius: var(--radius-lg); border: 1px solid var(--panel-border); box-shadow: var(--shadow); padding: 24px; }
+    .panel-hdr { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
     .panel-hdr h2 { margin: 0; font-size: 18px; }
-    .menu-grid { display: grid; gap: 12px; }
-    .menu-row { display: grid; grid-template-columns: 120px 1fr 1fr 1fr auto; gap: 12px; align-items: center; padding: 16px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0; }
-    .menu-row.editing { background: #f0fdfa; border-color: #99f6e4; }
-    .day-name { font-weight: 800; font-size: 14px; color: #0f172a; }
-    .meal-cell { display: grid; gap: 4px; }
-    .meal-cell small { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px; }
-    .meal-cell span { font-size: 13px; color: #0f172a; }
-    .meal-cell input { border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; font-size: 13px; width: 100%; background: #fff; }
-    .meal-cell input:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
+    .panel-hdr small { color: var(--muted); font-weight: 600; }
+    .menu-grid { display: grid; gap: 10px; }
+    .menu-row { display: grid; grid-template-columns: 130px 1fr 1fr 1fr auto; gap: 12px; align-items: center; padding: 14px 16px; border-radius: var(--radius); background: #f7faf9; border: 1px solid var(--line); transition: var(--transition); }
+    .menu-row.editing { background: var(--primary-soft); border-color: var(--primary-200); }
+    .day-pill { display: inline-flex; align-items: center; padding: 5px 14px; border-radius: 999px; background: var(--primary-soft); color: var(--primary-darker); font-weight: 800; font-size: 12px; letter-spacing: 0.3px; justify-self: start; }
+    .menu-row.editing .day-pill { background: #fff; }
+    .meal-cell { display: grid; gap: 4px; min-width: 0; }
+    .meal-cell small { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .meal-cell span { font-size: 14px; color: var(--ink); font-weight: 600; }
+    .meal-cell input { border: 1.5px solid var(--line-strong); border-radius: 9px; padding: 9px 11px; font-size: 14px; width: 100%; background: #fff; }
+    .meal-cell input:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring); }
     .row-actions { display: flex; gap: 6px; }
-    .btn-sm { padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-    .btn-sm:hover { background: #f1f5f9; }
-    .btn-sm.save { background: #dcfce7; color: #15803d; border-color: #86efac; }
-    .btn-sm.danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-    .notes-section { margin-top: 16px; }
-    .notes-section label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; color: #475569; }
-    .notes-section textarea { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 14px; width: 100%; min-height: 80px; resize: vertical; font-family: inherit; }
-    .notes-section textarea:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
-    .btn-save { padding: 11px 24px; border-radius: 12px; border: none; background: linear-gradient(135deg,#14b8a6,#0d9488); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 12px; }
-    .empty { padding: 48px; text-align: center; color: #94a3b8; border: 2px dashed #e2e8f0; border-radius: 16px; }
-    .toast { padding: 12px 18px; border-radius: 12px; background: #dcfce7; border: 1px solid #86efac; color: #15803d; font-size: 14px; font-weight: 700; }
-    @media (max-width: 900px) { .menu-row { grid-template-columns: 1fr; } }
+    .btn-sm { min-height: 38px; padding: 6px 13px; border-radius: 9px; border: 1px solid var(--line-strong); background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: var(--transition); }
+    .btn-sm:hover { background: #f8fafc; }
+    .btn-sm.save { background: var(--primary-soft); color: var(--primary-darker); border-color: var(--primary-200); }
+    .btn-sm.danger { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .add-btn { min-height: 46px; padding: 11px 24px; border-radius: 12px; border: none; background: var(--primary-grad); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 18px rgba(16,185,129,0.28); }
+    .add-btn:hover { transform: translateY(-1px); }
+    .empty { padding: 48px 24px; text-align: center; color: var(--muted); border: 1.5px dashed var(--line-strong); border-radius: var(--radius-lg); background: #fbfcfc; }
+    .toast { display: flex; align-items: center; gap: 8px; padding: 13px 18px; border-radius: var(--radius); background: var(--primary-soft); border: 1px solid var(--primary-200); color: var(--primary-darker); font-size: 14px; font-weight: 700; animation: toastIn 0.3s ease-out; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    @media (max-width: 860px) {
+      .menu-row { grid-template-columns: 1fr 1fr; }
+      .day-pill { grid-column: 1/-1; }
+      .row-actions { grid-column: 1/-1; }
+      .row-actions .btn-sm { flex: 1; min-height: 44px; }
+    }
     @media (max-width: 768px) { .hero { flex-direction: column; align-items: flex-start; padding: 22px; } }
+    @media (max-width: 520px) { .menu-row { grid-template-columns: 1fr; } }
   `],
   template: `
     <div class="page">
       <div class="hero">
-        <div>
+        <div class="hero-txt">
           <p>Mess Management</p>
           <h1>🍽️ Food Menu</h1>
         </div>
@@ -56,14 +64,14 @@ const MEAL_ICONS: Record<string, string> = { breakfast: '🌅', lunch: '☀️',
       <div class="panel">
         <div class="panel-hdr">
           <h2>Weekly Menu</h2>
-          <small style="color:#64748b;font-weight:600;">Click Edit to update any day</small>
+          <small>Tap Edit to update any day</small>
         </div>
 
         @if (menu.length) {
           <div class="menu-grid">
             @for (item of menu; track item._id) {
               <div class="menu-row" [class.editing]="editingId === item._id">
-                <div class="day-name">{{ item.day }}</div>
+                <div class="day-pill">{{ item.day }}</div>
 
                 @if (editingId === item._id) {
                   <div class="meal-cell"><small>🌅 Breakfast</small><input [(ngModel)]="editForm.breakfast" placeholder="e.g. Idli, Dosa" /></div>
@@ -91,7 +99,7 @@ const MEAL_ICONS: Record<string, string> = { breakfast: '🌅', lunch: '☀️',
 
         @if (menu.length < 7) {
           <div style="margin-top:16px;">
-            <button class="btn-save" (click)="addMissingDays()">+ Add Missing Days</button>
+            <button class="add-btn" (click)="addMissingDays()">+ Add Missing Days</button>
           </div>
         }
       </div>

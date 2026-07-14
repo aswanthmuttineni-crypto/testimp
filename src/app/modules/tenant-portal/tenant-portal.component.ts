@@ -3,95 +3,121 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, FILE_URL } from '../../core/services/api.service';
 import { Tenant } from '../../core/models';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
 
 type Tab = 'kyc' | 'complaints' | 'notices' | 'food' | 'payments';
 
 @Component({
   selector: 'app-tenant-portal',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, FormsModule],
+  imports: [CommonModule, CurrencyPipe, DatePipe, FormsModule, PaginationComponent],
   styles: [`
-    .page { display: grid; gap: 22px; }
-    .hero { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 28px 32px; border-radius: 24px; background: linear-gradient(135deg,#0f766e,#1e293b); color: #fff; box-shadow: 0 16px 40px rgba(15,23,42,0.15); }
-    .hero p { margin: 0 0 6px; color: #99f6e4; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.4px; }
-    .hero h1 { margin: 0; color: #fff; font-size: clamp(22px,4vw,34px); }
-    .hero small { color: rgba(255,255,255,0.72); }
-    .status { padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,0.16); font-size: 12px; font-weight: 800; }
-    .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-    .tab { padding: 9px 18px; border-radius: 12px; border: 1.5px solid #e2e8f0; background: #fff; font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.18s; }
-    .tab.active { background: #0d9488; border-color: #0d9488; color: #fff; }
-    .tab:hover:not(.active) { border-color: #0d9488; color: #0d9488; }
-    .panel { padding: 22px; background: #fff; border-radius: 20px; border: 1px solid #e2e8f0; }
+    .page { display: grid; gap: 18px; }
+    .hero { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 24px 28px; border-radius: var(--radius-xl); background: linear-gradient(135deg,#059669,#047857); color: #fff; box-shadow: 0 16px 40px rgba(5,150,105,0.28); position: relative; overflow: hidden; }
+    .hero::after { content: ''; position: absolute; top: -50%; right: -4%; width: 320px; height: 320px; background: radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%); pointer-events: none; }
+    .hero-id { display: flex; align-items: center; gap: 16px; position: relative; z-index: 1; min-width: 0; }
+    .hero-avatar { width: 58px; height: 58px; border-radius: 18px; background: rgba(255,255,255,0.18); display: grid; place-items: center; font-size: 24px; font-weight: 800; flex-shrink: 0; }
+    .hero p { margin: 0 0 4px; color: rgba(255,255,255,0.82); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.4px; }
+    .hero h1 { margin: 0; color: #fff; font-size: clamp(21px,4vw,32px); letter-spacing: -0.8px; }
+    .hero small { color: rgba(255,255,255,0.82); font-size: 13px; }
+    .status { padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,0.2); font-size: 12px; font-weight: 800; position: relative; z-index: 1; flex-shrink: 0; }
+
+    .tabs { display: flex; gap: 6px; background: var(--panel); padding: 6px; border-radius: var(--radius); border: 1px solid var(--panel-border); box-shadow: var(--shadow-xs); }
+    .tab { min-height: 42px; padding: 8px 16px; border-radius: 10px; border: none; background: transparent; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; transition: var(--transition); white-space: nowrap; }
+    .tab.active { background: var(--primary-soft); color: var(--primary-darker); }
+    .tab:hover:not(.active) { background: #f6faf8; }
+
+    .panel { padding: 22px; background: var(--panel); border-radius: var(--radius-lg); border: 1px solid var(--panel-border); box-shadow: var(--shadow); }
     .panel h2 { margin: 0 0 18px; font-size: 18px; }
-    .grid { display: grid; grid-template-columns: 0.9fr 1.3fr; gap: 20px; }
+    .grid { display: grid; grid-template-columns: 0.9fr 1.3fr; gap: 18px; align-items: start; }
     .info { display: grid; gap: 10px; }
-    .item { padding: 13px 14px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
-    .item small { display: block; margin-bottom: 4px; color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; }
-    .item strong { color: #0f172a; font-size: 14px; overflow-wrap: anywhere; }
+    .item { padding: 13px 15px; border-radius: 12px; background: #f7faf9; border: 1px solid var(--line); }
+    .item small { display: block; margin-bottom: 4px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; }
+    .item strong { color: var(--ink); font-size: 14px; overflow-wrap: anywhere; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    label { display: grid; gap: 6px; color: #475569; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; }
-    input, textarea, select { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; color: #0f172a; font: inherit; text-transform: none; letter-spacing: 0; background: #fff; }
-    textarea { min-height: 82px; resize: vertical; }
-    input:focus, textarea:focus, select:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
+    label { display: grid; gap: 6px; color: var(--ink-soft); font-size: 12px; font-weight: 700; }
+    input, textarea, select { width: 100%; border: 1.5px solid var(--line-strong); border-radius: 11px; padding: 11px 13px; color: var(--ink); font: inherit; font-size: 16px; background: #fff; }
+    textarea { min-height: 82px; resize: vertical; line-height: 1.6; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring); }
     .wide { grid-column: 1 / -1; }
     .actions { display: flex; gap: 10px; align-items: center; margin-top: 18px; flex-wrap: wrap; }
-    .btn { min-height: 42px; padding: 0 20px; border: none; border-radius: 12px; background: linear-gradient(135deg,#14b8a6,#0d9488); color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; }
+    .btn { min-height: 48px; padding: 0 24px; border: none; border-radius: 12px; background: var(--primary-grad); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 18px rgba(16,185,129,0.28); }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
     .btn:disabled { opacity: 0.65; cursor: not-allowed; }
-    .btn-outline { background: #fff; border: 1.5px solid #0d9488; color: #0d9488; }
-    .msg { padding: 10px 13px; border-radius: 10px; font-size: 13px; font-weight: 700; }
-    .msg.ok { background: #dcfce7; color: #166534; }
-    .msg.err { background: #fee2e2; color: #b91c1c; }
-    .doc-link { color: #0d9488; font-size: 13px; font-weight: 800; text-decoration: none; }
-    .empty { padding: 40px; text-align: center; color: #94a3b8; border: 2px dashed #e2e8f0; border-radius: 14px; }
-    .error-box { padding: 32px; text-align: center; color: #b91c1c; border: 2px dashed #fecaca; border-radius: 14px; background: #fef2f2; }
-    /* complaints */
-    .c-list { display: grid; gap: 12px; }
-    .c-card { padding: 16px; border-radius: 14px; border: 1px solid #e2e8f0; background: #f8fafc; }
-    .c-card-hdr { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
-    .c-title { font-size: 14px; font-weight: 800; color: #0f172a; }
-    .c-desc { font-size: 13px; color: #64748b; margin: 0; }
-    .c-meta { font-size: 11px; color: #94a3b8; margin-top: 6px; }
-    .badge { display: inline-flex; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+    .msg { padding: 10px 14px; border-radius: 11px; font-size: 13px; font-weight: 700; }
+    .msg.ok { background: var(--primary-soft); color: var(--primary-darker); }
+    .msg.err { background: #fef2f2; color: #b91c1c; }
+    .doc-link { color: var(--primary-dark); font-size: 13px; font-weight: 800; text-decoration: none; }
+    .doc-link:hover { text-decoration: underline; }
+    .empty { padding: 40px 24px; text-align: center; color: var(--muted); border: 1.5px dashed var(--line-strong); border-radius: var(--radius-lg); background: #fbfcfc; }
+    .error-box { padding: 32px; text-align: center; color: #b91c1c; border: 1.5px dashed #fecaca; border-radius: var(--radius-lg); background: #fef2f2; }
+
+    .c-list, .n-list { display: grid; gap: 12px; }
+    .c-card, .n-card { padding: 16px; border-radius: var(--radius); border: 1px solid var(--line); background: #f7faf9; }
+    .c-card-hdr { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+    .c-title { font-size: 16px; font-weight: 800; color: var(--ink); }
+    .c-desc { font-size: 13px; color: var(--ink-soft); margin: 0; line-height: 1.55; }
+    .c-meta { font-size: 11px; color: var(--faint); margin-top: 8px; }
+    .badge { display: inline-flex; padding: 3px 11px; border-radius: 999px; font-size: 11px; font-weight: 800; }
     .badge-open { background: #fee2e2; color: #b91c1c; }
     .badge-progress { background: #fef9c3; color: #a16207; }
-    .badge-resolved { background: #dcfce7; color: #166534; }
+    .badge-resolved { background: var(--primary-100); color: var(--primary-darker); }
     .badge-low { background: #f1f5f9; color: #475569; }
     .badge-medium { background: #fef9c3; color: #a16207; }
     .badge-high { background: #fee2e2; color: #b91c1c; }
-    /* notices */
-    .n-list { display: grid; gap: 12px; }
-    .n-card { padding: 16px; border-radius: 14px; border: 1px solid #e2e8f0; background: #f8fafc; }
-    .n-card.pinned { border-color: #0d9488; background: #f0fdfa; }
-    .n-title { font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
-    .n-content { font-size: 13px; color: #475569; white-space: pre-wrap; }
-    .n-meta { font-size: 11px; color: #94a3b8; margin-top: 8px; }
-    .pin-badge { display: inline-flex; padding: 2px 8px; border-radius: 999px; background: #ccfbf1; color: #0f766e; font-size: 10px; font-weight: 800; margin-left: 6px; }
-    /* food */
-    .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-    .food-card { padding: 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: #f8fafc; }
-    .food-day { font-size: 13px; font-weight: 800; color: #0d9488; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+    .n-card.pinned { border-color: var(--primary-200); background: var(--primary-soft); }
+    .n-title { font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 4px; }
+    .n-content { font-size: 13px; color: var(--ink-soft); white-space: pre-wrap; line-height: 1.55; }
+    .n-meta { font-size: 11px; color: var(--faint); margin-top: 8px; }
+    .pin-badge { display: inline-flex; padding: 2px 8px; border-radius: 999px; background: var(--primary-100); color: var(--primary-darker); font-size: 10px; font-weight: 800; margin-left: 6px; }
+
+    .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .food-card { padding: 18px; border-radius: var(--radius); border: 1px solid var(--line); background: #f7faf9; }
+    .food-day { display: inline-flex; padding: 4px 12px; border-radius: 999px; background: var(--primary-soft); color: var(--primary-darker); font-size: 12px; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 12px; }
     .meal-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; }
-    .meal-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; width: 68px; flex-shrink: 0; padding-top: 2px; }
-    .meal-val { font-size: 13px; color: #0f172a; }
-    /* payments */
-    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .meal-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--faint); width: 68px; flex-shrink: 0; padding-top: 2px; }
+    .meal-val { font-size: 13px; color: var(--ink); }
+
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--line); }
     table { width: 100%; border-collapse: collapse; }
-    thead tr { background: #f8fafc; }
-    th { padding: 11px 14px; text-align: left; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
-    td { padding: 13px 14px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    thead tr { background: #f7faf9; }
+    th { padding: 11px 14px; text-align: left; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); border-bottom: 1px solid var(--line); white-space: nowrap; }
+    td { padding: 13px 14px; border-bottom: 1px solid var(--line); font-size: 13px; }
     tbody tr:last-child td { border-bottom: none; }
-    .badge-paid { background: #dcfce7; color: #166534; }
+    .badge-paid { background: var(--primary-100); color: var(--primary-darker); }
     .badge-pending { background: #fef9c3; color: #a16207; }
-    @media (max-width: 900px) { .grid, .form-grid { grid-template-columns: 1fr; } .hero { align-items: flex-start; flex-direction: column; } }
+
+    /* payments mobile cards */
+    .pcards { display: none; flex-direction: column; gap: 12px; }
+    .pcard { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; background: #f7faf9; }
+    .pcard-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .pcard-top strong { font-size: 16px; color: var(--ink); }
+    .pcard-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .pcard-meta small { display: block; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+    .pcard-meta span { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .pcard-note { margin-top: 10px; font-size: 12px; color: var(--muted); }
+
+    @media (max-width: 900px) { .grid, .form-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) {
+      .hero { flex-direction: column; align-items: flex-start; padding: 22px; }
+      .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+      .tabs::-webkit-scrollbar { display: none; }
+      .actions .btn { width: 100%; }
+      .table-wrap { display: none; }
+      .pcards { display: flex; }
+    }
   `],
   template: `
     <div class="page">
       @if (tenant) {
         <div class="hero">
-          <div>
-            <p>Tenant Portal</p>
-            <h1>{{ tenant.name }}</h1>
-            <small>{{ roomNo(tenant) }} · Bed {{ tenant.bedNo }}</small>
+          <div class="hero-id">
+            <div class="hero-avatar">{{ tenant.name.charAt(0).toUpperCase() }}</div>
+            <div>
+              <p>Tenant Portal</p>
+              <h1>{{ tenant.name }}</h1>
+              <small>{{ roomNo(tenant) }} · Bed {{ tenant.bedNo }}</small>
+            </div>
           </div>
           <span class="status">{{ tenant.status }}</span>
         </div>
@@ -155,7 +181,7 @@ type Tab = 'kyc' | 'complaints' | 'notices' | 'food' | 'payments';
                     <th>Month</th><th>Year</th><th>Amount</th><th>Status</th><th>Paid On</th><th>Note</th>
                   </tr></thead>
                   <tbody>
-                    @for (r of rents; track r._id) {
+                    @for (r of pagedRents(); track r._id) {
                       <tr>
                         <td>{{ r.month }}</td>
                         <td>{{ r.year }}</td>
@@ -168,6 +194,25 @@ type Tab = 'kyc' | 'complaints' | 'notices' | 'food' | 'payments';
                   </tbody>
                 </table>
               </div>
+
+              <!-- MOBILE CARDS -->
+              <div class="pcards">
+                @for (r of pagedRents(); track r._id) {
+                  <div class="pcard">
+                    <div class="pcard-top">
+                      <strong>{{ r.month }} {{ r.year }}</strong>
+                      <span class="badge" [class.badge-paid]="r.status==='PAID'" [class.badge-pending]="r.status!=='PAID'">{{ r.status }}</span>
+                    </div>
+                    <div class="pcard-meta">
+                      <div><small>Amount</small><span>{{ r.amount | currency:'INR':'symbol':'1.0-0' }}</span></div>
+                      <div><small>Paid On</small><span>{{ r.paymentDate ? (r.paymentDate | date:'dd MMM yyyy') : '-' }}</span></div>
+                    </div>
+                    @if (r.note) { <div class="pcard-note">📝 {{ r.note }}</div> }
+                  </div>
+                }
+              </div>
+
+              <app-pagination [total]="rents.length" [page]="pageRents" [pageSize]="pageSize" (pageChange)="pageRents = $event"></app-pagination>
             } @else {
               <div class="empty">No payment records found.</div>
             }
@@ -291,6 +336,12 @@ export class TenantPortalComponent implements OnInit {
   tab: Tab = 'kyc';
 
   rents: any[] = [];
+  pageRents = 1;
+  pageSize = 10;
+  pagedRents() {
+    const start = (this.pageRents - 1) * this.pageSize;
+    return this.rents.slice(start, start + this.pageSize);
+  }
   complaints: any[] = [];
   notices: any[] = [];
   foodMenu: any[] = [];

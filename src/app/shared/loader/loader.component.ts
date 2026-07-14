@@ -25,7 +25,7 @@ import { Component } from '@angular/core';
         width: 44px;
         height: 44px;
         border: 4px solid rgba(255, 255, 255, 0.12);
-        border-top-color: #2dd4bf;
+        border-top-color: #34d399;
         border-radius: 50%;
         animation: spin 0.9s linear infinite;
       }
