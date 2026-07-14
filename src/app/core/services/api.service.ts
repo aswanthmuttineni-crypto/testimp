@@ -117,6 +117,14 @@ export class ApiService {
         `${API_URL}/notifications/monthly-dues/whatsapp-single`,
         { tenantId },
       ),
+    sendMonthlyDuePush: () =>
+      this.http.post<{
+        message: string;
+        sent?: unknown[];
+        skipped?: unknown[];
+        errors?: unknown[];
+        monthlyDues: MonthlyDues;
+      }>(`${API_URL}/notifications/monthly-dues/push`, {}),
   };
 
   foodMenu = {

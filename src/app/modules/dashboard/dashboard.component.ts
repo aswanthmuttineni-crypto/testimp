@@ -21,6 +21,7 @@ import {
   Title,
   Tooltip,
 } from 'chart.js';
+import { Observable } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { Summary } from '../../core/models';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
@@ -116,6 +117,9 @@ Chart.register(
       }
       .btn-send.whatsapp {
         background: linear-gradient(135deg, #22c55e, #16a34a);
+      }
+      .btn-send.push {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
       }
       .btn-send:hover {
         opacity: 0.9;
@@ -647,6 +651,17 @@ Chart.register(
                 : '📱 Send WhatsApp'
             }}
           </button>
+          <button
+            class="btn-send push"
+            [disabled]="sending"
+            (click)="sendDuePush()"
+          >
+            {{
+              sending && sendingChannel === 'PUSH'
+                ? 'Sending...'
+                : '🔔 Send Push'
+            }}
+          </button>
         </div>
       </div>
 
@@ -1063,7 +1078,7 @@ export class DashboardComponent implements OnInit {
   notice = '';
   noticeType: 'info' | 'success' | 'error' = 'info';
   sending = false;
-  sendingChannel: 'EMAIL' | 'WHATSAPP' | null = null;
+  sendingChannel: 'EMAIL' | 'WHATSAPP' | 'PUSH' | null = null;
   sendingWa: Record<string, boolean> = {};
   today = new Date();
 
@@ -1219,19 +1234,32 @@ export class DashboardComponent implements OnInit {
     this.sendDueNotification('WHATSAPP');
   }
 
-  sendDueNotification(channel: 'EMAIL' | 'WHATSAPP') {
+  sendDuePush() {
+    this.sendDueNotification('PUSH');
+  }
+
+  sendDueNotification(channel: 'EMAIL' | 'WHATSAPP' | 'PUSH') {
     this.sending = true;
     this.sendingChannel = channel;
     this.notice =
       channel === 'EMAIL'
         ? 'Sending due mails...'
-        : 'Sending due WhatsApp messages...';
+        : channel === 'WHATSAPP'
+          ? 'Sending due WhatsApp messages...'
+          : 'Sending due push notifications...';
     this.noticeType = 'info';
 
-    const request =
+    const request: Observable<{
+      message: string;
+      sent?: unknown[];
+      skipped?: unknown[];
+      errors?: unknown[];
+    }> =
       channel === 'EMAIL'
         ? this.api.notifications.sendMonthlyDueEmails()
-        : this.api.notifications.sendMonthlyDueWhatsApp();
+        : channel === 'WHATSAPP'
+          ? this.api.notifications.sendMonthlyDueWhatsApp()
+          : this.api.notifications.sendMonthlyDuePush();
 
     request.subscribe({
       next: (res) => {
@@ -1281,47 +1309,29 @@ export class DashboardComponent implements OnInit {
     return digits;
   }
 
+  // Free WhatsApp reminder: opens WhatsApp (app or web) with a pre-filled
+  // message. The admin just taps Send — no paid WhatsApp Cloud API needed.
   sendSingleWhatsApp(
-    tenantId: string,
+    _tenantId: string,
     tenantName: string,
     tenantPhone?: string,
     amount?: number,
     room?: string,
     bedNo?: number,
   ) {
-    this.sendingWa[tenantId] = true;
-    this.api.notifications.sendMonthlyDueWhatsAppSingle(tenantId).subscribe({
-      next: (res) => {
-        this.sendingWa[tenantId] = false;
-        this.notice = res.message;
-        this.noticeType = 'success';
-        setTimeout(() => (this.notice = ''), 3000);
-      },
-      error: (err) => {
-        this.sendingWa[tenantId] = false;
-        const backendMsg = err.error?.message || '';
-        if (err.status === 501 || backendMsg.includes('WhatsApp API is not configured')) {
-          // Fallback to wa.me click-to-chat
-          const cleaned = this.cleanPhoneForWa(tenantPhone || '');
-          if (!cleaned) {
-            this.notice = `No phone number available for ${tenantName}`;
-            this.noticeType = 'error';
-            return;
-          }
-          const month = this.summary?.monthlyDues?.month || '';
-          const year = this.summary?.monthlyDues?.year || '';
-          const text = `Hello ${tenantName},\n\nYour rent of ₹${amount || ''} for ${month} ${year} is pending.\n\nRoom: ${room || ''}\nBed: ${bedNo ?? ''}\n\nPlease pay at your earliest convenience.\n\nAjs Deluxe\n📞 8555831614`;
-          const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`;
-          window.open(url, '_blank');
-          this.notice = `Opened WhatsApp chat for ${tenantName}`;
-          this.noticeType = 'success';
-          setTimeout(() => (this.notice = ''), 3000);
-          return;
-        }
-
-        this.notice = backendMsg || `Failed to send WhatsApp to ${tenantName}`;
-        this.noticeType = 'error';
-      },
-    });
+    const cleaned = this.cleanPhoneForWa(tenantPhone || '');
+    if (!cleaned) {
+      this.notice = `No phone number available for ${tenantName}`;
+      this.noticeType = 'error';
+      return;
+    }
+    const month = this.summary?.monthlyDues?.month || '';
+    const year = this.summary?.monthlyDues?.year || '';
+    const text = `Hello ${tenantName},\n\nYour hostel rent of ₹${amount || ''} for ${month} ${year} is pending.\n\nRoom: ${room || ''}\nBed: ${bedNo ?? ''}\n\nPlease pay at your earliest convenience.\n\nAjs Deluxe\n📞 8555831614`;
+    const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+    this.notice = `Opened WhatsApp chat for ${tenantName}`;
+    this.noticeType = 'success';
+    setTimeout(() => (this.notice = ''), 3000);
   }
 }

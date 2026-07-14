@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService, FILE_URL } from '../../core/services/api.service';
 import { Tenant } from '../../core/models';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { PushService } from '../../core/services/push.service';
 
 type Tab = 'kyc' | 'complaints' | 'notices' | 'food' | 'payments';
 
@@ -47,6 +48,16 @@ type Tab = 'kyc' | 'complaints' | 'notices' | 'food' | 'payments';
     .msg { padding: 10px 14px; border-radius: 11px; font-size: 13px; font-weight: 700; }
     .msg.ok { background: var(--primary-soft); color: var(--primary-darker); }
     .msg.err { background: #fef2f2; color: #b91c1c; }
+
+    .reminder-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--panel-border); box-shadow: var(--shadow-xs); }
+    .reminder-bar.on { border-color: var(--primary-200); background: var(--primary-soft); }
+    .reminder-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .reminder-txt strong { font-size: 14px; color: var(--ink); }
+    .reminder-txt small { font-size: 12px; color: var(--muted); }
+    .reminder-btn { min-height: 42px; padding: 0 20px; border: none; border-radius: 11px; background: var(--primary-grad); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .reminder-btn.ghost { background: #fff; color: var(--ink); border: 1.5px solid var(--line-strong); }
+    .reminder-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    @media (max-width: 560px) { .reminder-bar { flex-direction: column; align-items: stretch; } .reminder-btn { width: 100%; } }
     .doc-link { color: var(--primary-dark); font-size: 13px; font-weight: 800; text-decoration: none; }
     .doc-link:hover { text-decoration: underline; }
     .empty { padding: 40px 24px; text-align: center; color: var(--muted); border: 1.5px dashed var(--line-strong); border-radius: var(--radius-lg); background: #fbfcfc; }
@@ -121,6 +132,21 @@ type Tab = 'kyc' | 'complaints' | 'notices' | 'food' | 'payments';
           </div>
           <span class="status">{{ tenant.status }}</span>
         </div>
+
+        @if (pushSupported) {
+          <div class="reminder-bar" [class.on]="pushEnabled">
+            <div class="reminder-txt">
+              <strong>🔔 Rent reminders</strong>
+              <small>{{ pushEnabled ? 'On — you will get a free push notification when rent is due.' : 'Get a free push notification on this device when your rent is due.' }}</small>
+            </div>
+            @if (pushEnabled) {
+              <button class="reminder-btn ghost" [disabled]="pushBusy" (click)="disableReminders()">{{ pushBusy ? '...' : 'Turn off' }}</button>
+            } @else {
+              <button class="reminder-btn" [disabled]="pushBusy" (click)="enableReminders()">{{ pushBusy ? 'Enabling...' : 'Enable' }}</button>
+            }
+          </div>
+          @if (pushMsg) { <div class="msg" [class.ok]="!pushErr" [class.err]="pushErr">{{ pushMsg }}</div> }
+        }
 
         <div class="tabs">
           <button class="tab" [class.active]="tab==='kyc'" (click)="setTab('kyc')">👤 My KYC</button>
@@ -326,6 +352,7 @@ type Tab = 'kyc' | 'complaints' | 'notices' | 'food' | 'payments';
 })
 export class TenantPortalComponent implements OnInit {
   private api = inject(ApiService);
+  private push = inject(PushService);
   tenant?: Tenant;
   form: Partial<Tenant> = {};
   file?: File;
@@ -334,6 +361,13 @@ export class TenantPortalComponent implements OnInit {
   error = '';
 
   tab: Tab = 'kyc';
+
+  /* Free push (rent reminders) opt-in state */
+  pushSupported = false;
+  pushEnabled = false;
+  pushBusy = false;
+  pushMsg = '';
+  pushErr = false;
 
   rents: any[] = [];
   pageRents = 1;
@@ -351,7 +385,43 @@ export class TenantPortalComponent implements OnInit {
   cNotice = '';
   cError = '';
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+    this.pushSupported = this.push.isSupported() && this.push.isConfigured();
+    this.pushEnabled = this.push.isEnabled;
+  }
+
+  async enableReminders() {
+    this.pushBusy = true;
+    this.pushMsg = '';
+    try {
+      await this.push.enable();
+      this.pushEnabled = true;
+      this.pushErr = false;
+      this.pushMsg = 'Rent reminders enabled on this device.';
+    } catch (e: any) {
+      this.pushErr = true;
+      this.pushMsg = e?.message || 'Could not enable reminders.';
+    } finally {
+      this.pushBusy = false;
+    }
+  }
+
+  async disableReminders() {
+    this.pushBusy = true;
+    this.pushMsg = '';
+    try {
+      await this.push.disable();
+      this.pushEnabled = false;
+      this.pushErr = false;
+      this.pushMsg = 'Rent reminders turned off on this device.';
+    } catch (e: any) {
+      this.pushErr = true;
+      this.pushMsg = e?.message || 'Could not turn off reminders.';
+    } finally {
+      this.pushBusy = false;
+    }
+  }
 
   setTab(t: Tab) {
     this.tab = t;
